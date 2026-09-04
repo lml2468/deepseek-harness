@@ -40,7 +40,7 @@ function readWidthPreference(): number | null {
 function resolveContentWidth(columnWidth: number, preference: number | null): number {
   const max = Math.max(CONTENT_MIN, columnWidth - CONTENT_EDGE_BUDGET)
   if (preference !== null) return Math.min(Math.max(preference, CONTENT_MIN), max)
-  return Math.max(748, Math.min(columnWidth * 0.74, 920))
+  return Math.max(CONTENT_MIN, Math.min(columnWidth * 0.62, 860))
 }
 
 /** One transcript width handle: pointer capture + rAF-throttled symmetric

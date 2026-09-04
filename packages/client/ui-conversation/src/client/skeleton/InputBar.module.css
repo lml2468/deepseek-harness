@@ -210,7 +210,7 @@
 /* Hero reserves a task-sized writing area; the docked composer collapses to
    the content height. */
 .hero .input {
-  min-height: 98px;
+  min-height: 82px;
 }
 
 @media (max-width: 760px) {
