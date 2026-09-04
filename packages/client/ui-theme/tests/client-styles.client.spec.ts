@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /** Dynamic ui-theme entry owns the global styles in dependency order. */
 import { Context } from '@deepseek-ai/cordis'
+import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it } from 'vitest'
 import { installThemeStyles } from '../src/client/styles.ts'
 
@@ -27,6 +28,11 @@ describe('ui-theme client styles', () => {
       `${PLUGIN_ID}/gradient-shadow-text.css`,
       `${PLUGIN_ID}/shiki.css`,
     ])
+    const base = readFileSync('packages/client/ui-theme/src/styles/base.css', 'utf8')
+    expect(base).toContain('--dsh-ui-space-1: 4px')
+    expect(base).toContain('--dsh-ui-control-height-md: 32px')
+    expect(base).toContain('--dsh-ui-radius-overlay: 16px')
+    expect(base).toContain('--dsh-ui-content-width: 920px')
     await fiber.dispose()
     expect(document.head.querySelectorAll(`style[data-plugin="${PLUGIN_ID}"]`)).toHaveLength(0)
   })

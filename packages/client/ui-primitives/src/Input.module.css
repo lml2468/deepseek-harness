@@ -1,11 +1,11 @@
 .wrap {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 8px;
+  gap: var(--dsh-ui-space-2);
+  height: var(--dsh-ui-control-height-md);
+  padding: 0 var(--dsh-ui-space-2);
   border: 0.5px solid var(--dsw-alias-border-l4);
-  border-radius: 8px;
+  border-radius: var(--dsh-ui-radius-control);
   background: var(--dsw-alias-bg-layer-1);
 }
 

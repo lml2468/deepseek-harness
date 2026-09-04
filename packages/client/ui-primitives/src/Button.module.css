@@ -22,13 +22,13 @@
 }
 
 .md {
-  height: 36px;
+  height: var(--dsh-ui-control-height-lg);
 }
 
 /* Compact height for dense rows; no dedicated figma node (Icon_container
  * 28x28 is the icon-only form) — geometry is ours. */
 .sm {
-  height: 28px;
+  height: var(--dsh-ui-control-height-sm);
   font-size: 12px;
   line-height: 18px;
   padding: 0 10px;

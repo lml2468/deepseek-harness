@@ -12,4 +12,16 @@
   --ds-transition-duration: 0.2s;
   --ds-transition-duration-fast: 0.1s;
   --ds-transition-duration-slow: 0.3s;
+  --dsh-ui-space-1: 4px;
+  --dsh-ui-space-2: 8px;
+  --dsh-ui-space-3: 12px;
+  --dsh-ui-space-4: 16px;
+  --dsh-ui-space-6: 24px;
+  --dsh-ui-control-height-sm: 28px;
+  --dsh-ui-control-height-md: 32px;
+  --dsh-ui-control-height-lg: 36px;
+  --dsh-ui-radius-control: 8px;
+  --dsh-ui-radius-surface: 12px;
+  --dsh-ui-radius-overlay: 16px;
+  --dsh-ui-content-width: 920px;
 }

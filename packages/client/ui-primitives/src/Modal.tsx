@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
@@ -38,14 +38,52 @@ type ModalProps = ModalBaseProps & (
 export function Modal({
   open, onClose, title, closeLabel, description, children, footer, className, contentClassName, headless = false,
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
   useEffect(() => {
     if (!open) return
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const dialog = dialogRef.current
+    const focusable = (): HTMLElement[] => dialog === null ? [] : [...dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    )].filter(element => !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true')
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const initial = active !== null && dialog?.contains(active) === true
+      ? active
+      : dialog?.querySelector<HTMLElement>('[autofocus]') ?? focusable()[0] ?? dialog
+    initial?.focus({ preventScroll: true })
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onCloseRef.current()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const candidates = focusable()
+      if (candidates.length === 0) {
+        e.preventDefault()
+        dialog?.focus({ preventScroll: true })
+        return
+      }
+      const first = candidates[0]
+      const last = candidates.at(-1)
+      if (first === undefined || last === undefined) return
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus({ preventScroll: true })
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus({ preventScroll: true })
+      }
     }
     document.addEventListener('keydown', onKeyDown)
-    return () => { document.removeEventListener('keydown', onKeyDown) }
-  }, [open, onClose])
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (opener?.isConnected === true) opener.focus({ preventScroll: true })
+    }
+  }, [open])
 
   if (!open) return null
 
@@ -53,10 +91,12 @@ export function Modal({
     <div className={css.root} role="presentation">
       <div className={css.mask} aria-hidden="true" onClick={onClose} />
       <div
+        ref={dialogRef}
         className={clsx(css.dialog, className)}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
       >
         {headless
           ? children

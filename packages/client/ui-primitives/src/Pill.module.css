@@ -1,9 +1,9 @@
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--dsh-ui-space-1);
   height: 24px;
-  padding: 0 8px;
+  padding: 0 var(--dsh-ui-space-2);
   border: none;
   border-radius: 12px;
   font-size: 12px;

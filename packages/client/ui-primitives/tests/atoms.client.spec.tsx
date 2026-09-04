@@ -417,6 +417,44 @@ describe('Modal', () => {
     expect(screen.getByText('Custom body')).toBeDefined()
     expect(screen.queryByRole('button')).toBeNull()
   })
+
+  it('moves focus into the dialog, traps Tab, and restores the opener', () => {
+    const opener = document.createElement('button')
+    document.body.append(opener)
+    opener.focus()
+    const view = render(
+      <Modal open onClose={() => {}} title="Focus dialog" closeLabel="Close">
+        <button type="button">First action</button>
+        <button type="button">Last action</button>
+      </Modal>,
+    )
+
+    const close = screen.getByRole('button', { name: 'Close' })
+    const last = screen.getByRole('button', { name: 'Last action' })
+    expect(document.activeElement).toBe(close)
+
+    last.focus()
+    fireEvent.keyDown(document, { key: 'Tab' })
+    expect(document.activeElement).toBe(close)
+
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(last)
+
+    view.unmount()
+    expect(document.activeElement).toBe(opener)
+    opener.remove()
+  })
+
+  it('preserves an explicitly autofocused safe action', () => {
+    render(
+      <Modal open onClose={() => {}} title="Delete item" closeLabel="Close" footer={(
+        <button type="button" autoFocus>Cancel</button>
+      )}>
+        body
+      </Modal>,
+    )
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' }))
+  })
 })
 
 describe('ConnectionIndicator', () => {

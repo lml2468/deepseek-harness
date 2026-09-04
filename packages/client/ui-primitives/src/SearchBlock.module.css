@@ -1,9 +1,9 @@
 .block {
-  --dsl-search-radius: 12px;
+  --dsl-search-radius: var(--dsh-ui-radius-surface);
   --dsl-search-line-height: 22px;
 
   position: relative;
-  margin: 16px 0;
+  margin: var(--dsh-ui-space-4) 0;
   color: var(--dsw-alias-label-primary);
   background: var(--dsw-alias-markdown-code-block);
   border-radius: var(--dsl-search-radius);
