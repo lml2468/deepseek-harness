@@ -15,6 +15,7 @@ kind: "package-reference"
 
 - [Conversation 组装](#conversation-assembly)
 - [Shell 与标准 props](#shell-and-standard-props)
+- [Hero 与 composer 扩展](#hero-and-composer-extensions)
 - [临时 composer entry](#temporary-composer-entries)
 - [模型体验](#model-experience)
 - [已知限制与暂缓事项](#known-limitations-and-deferred-work)
@@ -47,6 +48,13 @@ Session 首次绑定或缓存的 Session 成为 current 时，shell 会在渲染
 默认发送采用乐观提交：Enter 在同一事务里清空草稿、occurrence 表和撤销历史，composer 保持 `plain`，发送作为 detached attempt 运行，发送期间可以继续输入和提交。`sendSession` 在序列化之前用投递模式注册 Session 提交回显（`session.beginSubmission`）；Session 根据该模式与当前运行状态推导位置，因此空闲发送进入 transcript，繁忙时 Queue 进入 QueueDock，繁忙时 Steer 进入 pending-steering 区域。随后让出一帧，图片经浏览器原生 `FileReader` data-URL 路径编码。多个并发发送失败时，在用户编辑还原内容之前按提交顺序合并还原；命令提交保持冻结的 `submitting` 阶段。Detached attempt 持有图片 id，直到 admission 完成或 Session scope 销毁。回显以 observed 退休时，durable 图片缓存立即公开预览 URL，同时读取 admitted 附件，随后用规范化 URL 替换预览，并在两个 URL 各自停止使用后撤销。直接 subagent continuation 不创建本地回显，因为其 transport 不保留浏览器 request id。
 
 普通 composer 运行时，如果草稿为空或输入不可用，主指针操作保持为 Stop。可提交的文字或附件会把同一位置切换为 Queue Send；清空或成功提交草稿后恢复 Stop。繁忙态 Enter 设置继续选择 Queue 或 Steer 键盘操作。可继续 subagent 保留独立的 Send 与 Stop 操作（[决策](../../../.agents/notes/implemented/bug-fix/2026-08-20-running-draft-primary-send.zh.md)）。
+
+<a id="hero-and-composer-extensions"></a>
+## Hero 与 composer 扩展
+
+产品可以替换 `conversation.hero.header`、增加有序的 `conversation.hero.content`，或通过 `conversation.hero.layout` 排列已经构造好的 Hero 节点。这些 slot 只接收当前 Session 和输入快照用于呈现；常驻 Workspace 控件和 composer 仍由本包持有，并在无 Session 与空白 Session 状态间保持组件身份。
+
+`ctx.composerMenuActions` 在常驻 `+` 菜单中注册有序入口。每个条目根据当前 composer 上下文计算可见性和禁用原因，并调用所属能力；registry 不保存能力状态。图片附件、引用和命令包使用该入口。持续选择仍使用 `conversation.input.left` 或 `conversation.input.right`。
 
 <a id="temporary-composer-entries"></a>
 ## 临时 composer entry

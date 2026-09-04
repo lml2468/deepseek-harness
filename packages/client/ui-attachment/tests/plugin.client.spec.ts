@@ -1,4 +1,5 @@
 import { Context } from '@deepseek-ai/cordis'
+import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { describe, expect, it } from 'vitest'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
 import { apply as applyHost } from '../src/index.ts'
@@ -9,6 +10,7 @@ import { MessageImages } from '../src/client/MessageImages.tsx'
 async function bench() {
   const ctx = new Context()
   await ctx.plugin(SlotRegistry).await()
+  ctx.provide('locale', new LocaleRuntime(ctx))
   ctx.slots.register({
     name: 'root',
     children: {
@@ -30,7 +32,7 @@ describe('attachment plugin', () => {
 
   it('registers all entries and removes them with the plugin fiber', async () => {
     const { ctx, fiber } = await bench()
-    expect(inject).toEqual(['slots'])
+    expect(inject).toEqual(['slots', 'locale'])
     expect(ctx.slots.entries('conversation.input.attachments')).toMatchObject([{
       locale: 'conversation',
       component: ComposerAttachments,

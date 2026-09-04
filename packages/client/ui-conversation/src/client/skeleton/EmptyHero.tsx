@@ -67,8 +67,15 @@ export interface HeroShellProps {
   t: HeroTranslate
   /** Authorized renderer for the hero brand-mark slot. */
   renderSlot: ConversationSlotProps['renderSlot']
-  /** Overlay content after the stack (modals). */
-  children?: ReactNode
+}
+
+/** Default Hero layout receives only nodes already constructed by the shell. */
+export interface HeroLayoutProps {
+  header: ReactNode
+  contextControls: ReactNode
+  content: ReactNode
+  composer: ReactNode
+  active: boolean
 }
 
 /* Hover swim morph targets: the resting FISH_LOGO_PATH with weighted
@@ -129,36 +136,43 @@ function HeroFish({ hovering }: { hovering: boolean }) {
  * @param props - see {@link HeroShellProps}.
  * @returns the centered hero element tree.
  */
-export function HeroShell({ t, renderSlot, children }: HeroShellProps) {
+export function HeroShell({ t, renderSlot }: HeroShellProps) {
   const [hovering, setHovering] = useState(false)
   return (
-    <div className={css.root}>
+    <div className={css.headline}>
+      {/* figma 34:10412: fish 34×25 leading the headline, gap 10. */}
+      <span
+        className={css.fishHitbox}
+        onMouseEnter={() => {
+          if (window.matchMedia('(hover: hover) and (prefers-reduced-motion: no-preference)').matches) {
+            setHovering(true)
+          }
+        }}
+        onMouseLeave={() => { setHovering(false) }}
+      >
+        {renderSlot('conversation.hero.brand.mark', { size: 34, className: css.fish }, {
+          fallback: <HeroFish hovering={hovering} />,
+        })}
+      </span>
+      <span className={css.headlineText}>
+        {t('hero.headline')}
+      </span>
+    </div>
+  )
+}
+
+/** WorkBuddy-density default layout for the resident Hero and composer. */
+export function HeroLayout({ header, contextControls, content, composer, active }: HeroLayoutProps) {
+  return (
+    <div className={css.root} data-hero-active={active || undefined}>
       <div className={css.stack}>
-        <div className={css.headline}>
-          {/* figma 34:10412: fish 34×25 leading the headline, gap 10. */}
-          <span
-            className={css.fishHitbox}
-            onMouseEnter={() => {
-              if (window.matchMedia('(hover: hover) and (prefers-reduced-motion: no-preference)').matches) {
-                setHovering(true)
-              }
-            }}
-            onMouseLeave={() => { setHovering(false) }}
-          >
-            {renderSlot('conversation.hero.brand.mark', { size: 34, className: css.fish }, {
-              fallback: <HeroFish hovering={hovering} />,
-            })}
-          </span>
-          <span className={css.headlineText}>
-            {t('hero.headline')}
-          </span>
-          <span className={css.previewBadge}>{t('hero.preview')}</span>
-        </div>
+        {header}
         <div className={css.body}>
-          {/* The composer remains mounted outside this component. */}
+          {contextControls}
+          {content}
+          {composer}
         </div>
       </div>
-      {children}
     </div>
   )
 }

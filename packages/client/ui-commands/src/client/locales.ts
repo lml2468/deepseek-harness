@@ -2,6 +2,7 @@
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
+  'menu.action': '指令',
   'search.placeholder': '搜索…',
   'search.aria': '筛选选项',
   'status.loading': '正在加载选项…',
@@ -17,6 +18,7 @@ export type CommandKey = keyof typeof zh
 
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
+  'menu.action': 'Commands',
   'search.placeholder': 'Search…',
   'search.aria': 'Filter options',
   'status.loading': 'Loading options…',

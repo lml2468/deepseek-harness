@@ -7,7 +7,7 @@ import clsx from 'clsx'
 import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
 import type { ConversationSlotProps, InputZone } from '../contract/slots.ts'
 import { conversationPhase } from '../contract/snapshot.ts'
-import { HeroShell, WorkspaceChip, workspaceLabel } from './EmptyHero.tsx'
+import { HeroLayout, HeroShell, WorkspaceChip, workspaceLabel } from './EmptyHero.tsx'
 import css from './ConversationRoot.module.css'
 
 /** Full props composed from the slot contract. */
@@ -343,12 +343,40 @@ export function ConversationRoot({
         : hero ? { placeholder: t('placeholder.hero') } : {}),
   })
 
-  const composerBar = (
-    <div className={clsx(css.composerStack, hero && css.composerHero)}>
-      {hero && <HeroShell t={t} renderSlot={renderSlot} />}
-      {hero && heroWorkspaceRow}
+  const heroContext = { session, input: inputState }
+  const heroHeader = hero
+    ? renderSlot('conversation.hero.header', heroContext, {
+      fallback: <HeroShell t={t} renderSlot={renderSlot} />,
+    })
+    : null
+  const heroContent = hero
+    ? renderSlot('conversation.hero.content', heroContext)
+    : null
+  const composerBody = (
+    <>
       {zone !== undefined && renderSlot('conversation.input.dock', zone)}
       {inputBar}
+    </>
+  )
+  const composerBar = (
+    <div className={clsx(css.composerStack, hero && css.composerHero)}>
+      {renderSlot('conversation.hero.layout', {
+        ...heroContext,
+        header: heroHeader,
+        contextControls: hero ? heroWorkspaceRow : null,
+        content: heroContent,
+        composer: composerBody,
+      }, {
+        fallback: (
+          <HeroLayout
+            header={heroHeader}
+            contextControls={hero ? heroWorkspaceRow : null}
+            content={heroContent}
+            composer={composerBody}
+            active={hero}
+          />
+        ),
+      })}
     </div>
   )
 

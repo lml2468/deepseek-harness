@@ -4,7 +4,7 @@ import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import type { SessionSnapshot } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { WorkspaceSnapshot } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type {
-  MaybeSnapshotSelectorHook, ObservableSnapshot, SnapshotSelectorHook,
+  MaybeSnapshotSelectorHook, ObservableSnapshot, SnapshotSelectorHook, SnapshotStore,
 } from '@deepseek-ai/dsh-client-store'
 import type {
   InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore,
@@ -18,6 +18,7 @@ import type {
   ComposerKeyboard, DraftAttachmentId, EditSelection, InputActions, InputNotice, InputState,
 } from './input.ts'
 import type { createConversationStore } from '../stores.ts'
+import type { ComposerMenuAction } from '../composer-menu-actions.ts'
 import type { ComposerSubmitGesture, InputSubmitMode } from './composer-submission.ts'
 import type { ConversationSnapshot } from './snapshot.ts'
 import type { ViewTab } from './views.ts'
@@ -123,6 +124,12 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'conversation.hero.brand.mark': { kind: 'single'; scope: 'root'; owner: HeroBrandMarkOwnerProps }
     /** Agent-preset control staged for a New Session. */
     'conversation.hero.agentPreset': { kind: 'single'; scope: 'root'; owner: HeroAgentPresetOwnerProps }
+    /** Product-owned heading for the resident blank-Session Hero. */
+    'conversation.hero.header': { kind: 'single'; scope: 'session-maybe'; owner: ConversationHeroContext }
+    /** Ordered product content between Hero context controls and the composer. */
+    'conversation.hero.content': { kind: 'list'; scope: 'session-maybe'; owner: ConversationHeroContext }
+    /** Optional composition owner for the resident Hero nodes. */
+    'conversation.hero.layout': { kind: 'single'; scope: 'session-maybe'; owner: ConversationHeroLayoutOwnerProps }
     /** Full-width entries above the composer card. */
     'conversation.input.dock': { kind: 'list'; scope: 'session'; owner: InputZone }
     /** Floating entries rendered inside the resident composer card. */
@@ -175,6 +182,26 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 export interface HeroAgentPresetOwnerProps {
   /** Marker field: the occupant owns its roster and staged selection. */
   children?: never
+}
+
+/** Point-in-time state exposed to presentation-only Hero extensions. */
+export interface ConversationHeroContext {
+  /** Current Session snapshot, absent before the first Workspace is chosen. */
+  readonly session: SessionSnapshot | undefined
+  /** Current resident input state, absent before a Session input shell exists. */
+  readonly input: InputState | undefined
+}
+
+/** Already-constructed nodes handed to an optional Hero layout owner. */
+export interface ConversationHeroLayoutOwnerProps extends ConversationHeroContext {
+  /** Product or default heading. */
+  readonly header: ReactNode
+  /** Workspace, Preset, and other DSH-owned context controls. */
+  readonly contextControls: ReactNode
+  /** Ordered product content registered in `conversation.hero.content`. */
+  readonly content: ReactNode
+  /** The one resident DSH composer, including its execution-state dock. */
+  readonly composer: ReactNode
 }
 
 /** Header actions derive their state from standard Session props. */
@@ -268,10 +295,11 @@ export interface ComposerBarInjected {
     gesture: ComposerSubmitGesture,
     steeringAvailable: boolean,
   ) => InputSubmitMode
-  toggleCommandMenu: ((selection: EditSelection) => void) | undefined
+  toggleInputTrigger: ((source: string, trigger: '/' | '@', selection: EditSelection) => void) | undefined
   stop: (() => void) | undefined
   command: ((line: string) => Promise<boolean>) | undefined
   hooks: {
+    menuActions: SnapshotStore<readonly ComposerMenuAction[]>
     notices: ObservableSnapshot<InputNotice | null>
     lexicon: ObservableSnapshot<ReadonlyMap<'/' | '@', readonly string[]>>
     menuLauncher: ObservableSnapshot<string | null>
@@ -324,6 +352,9 @@ export type ConversationSlotProps =
     | 'conversation.hero.brand.mark'
     | 'conversation.hero.workspace'
     | 'conversation.hero.agentPreset'
+    | 'conversation.hero.header'
+    | 'conversation.hero.content'
+    | 'conversation.hero.layout'
   >
   & InjectFace<ConversationInjected>
   & PropsLocale<'conversation'>

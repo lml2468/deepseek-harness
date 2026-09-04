@@ -18,6 +18,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import { relativeTime } from '@deepseek-ai/dsh-client-ui-primitives'
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {
   ClientSessionContext, InputTriggerCrumb, InputTriggerServiceContract, InputTriggerSource,
 } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
@@ -114,6 +115,15 @@ export function apply(ctx: ClientContext): void {
   }
   const inputTriggers = ctx.get('inputTriggers') as InputTriggerServiceContract
   ctx.effect(() => inputTriggers.registerSource(source), 'ui-reference: @ source')
+  ctx.inject(['composerMenuActions'], scope => scope.effect(() => scope.composerMenuActions.register({
+    id: 'reference',
+    order: 20,
+    group: 'reference',
+    label: () => t('menu.action'),
+    icon: '@',
+    availability: () => ({ visible: true }),
+    invoke: (context) => { context.openInputTrigger('reference', '@') },
+  }), 'ui-reference: Composer action'))
 }
 
 type Translate = (key: ReferenceKey, params?: Record<string, unknown>) => string

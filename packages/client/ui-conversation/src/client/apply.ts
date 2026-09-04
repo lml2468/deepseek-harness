@@ -20,6 +20,7 @@ import { createConversationStore, readConversationViewPreference } from './store
 import { ConversationController, UnsupportedImageMediaTypeError } from './service.ts'
 import type { IConversation } from './service.ts'
 import { ComposerBlockRegistry } from './input/blocks.ts'
+import { ComposerMenuActionRegistry } from './composer-menu-actions.ts'
 import type { ComposerBlock } from './contract/composer-blocks.ts'
 import { InputHub } from './input/hub.ts'
 import { ComposerSubmissionPolicy } from './input/submission-policy.ts'
@@ -174,6 +175,11 @@ export function apply(ctx: Context): void {
 
   const inputHub = new InputHub(ctx, t)
   const composerBlocks = new ComposerBlockRegistry()
+  const composerMenuActions = new ComposerMenuActionRegistry()
+  ctx.effect(
+    () => ctx.reflect.provide('composerMenuActions', composerMenuActions),
+    'ui-conversation: Composer menu action registry',
+  )
 
   // Conversation assembly and input share the Session binding lifecycle. The
   // source roster is installed before any consuming Slot entry.
@@ -206,6 +212,9 @@ export function apply(ctx: Context): void {
       'conversation.hero.brand.mark': { kind: 'single', scope: 'root' },
       'conversation.hero.workspace': { kind: 'single', scope: 'root' },
       'conversation.hero.agentPreset': { kind: 'single', scope: 'root' },
+      'conversation.hero.header': { kind: 'single', scope: 'session-maybe' },
+      'conversation.hero.content': { kind: 'list', scope: 'session-maybe' },
+      'conversation.hero.layout': { kind: 'single', scope: 'session-maybe' },
     },
     inject: (sessionId: SessionId | undefined): ConversationInjected => ({
       hooks: {
@@ -289,10 +298,11 @@ export function apply(ctx: Context): void {
           draftImages: undefined,
           resolveSubmitMode: (running, gesture, steeringAvailable) =>
             submissionPolicy.resolve(running, gesture, steeringAvailable),
-          toggleCommandMenu: undefined,
+          toggleInputTrigger: undefined,
           stop: undefined,
           command: undefined,
           hooks: {
+            menuActions: composerMenuActions.actions,
             notices: ABSENT_NOTICES,
             lexicon: ABSENT_LEXICON,
             menuLauncher: ABSENT_MENU_LAUNCHER,
@@ -323,19 +333,19 @@ export function apply(ctx: Context): void {
         draftImages: ids => conversation.draftImages(ids),
         resolveSubmitMode: (running, gesture, steeringAvailable) =>
           submissionPolicy.resolve(running, gesture, steeringAvailable),
-        toggleCommandMenu: inputTriggers === undefined
-          ? undefined
-          : (selection) => {
-            shell.dismissPopup()
-            const snapshot = shell.snapshot
-            inputTriggers.toggleSource('command', {
-              trigger: '/',
-              query: '',
-              quoted: false,
-              position: snapshot.draft.slice(0, selection.start).trim() === '' ? 'leading' : 'inline',
-              span: { ...selection, draftRev: snapshot.draftRev },
-            })
-          },
+        toggleInputTrigger: (source, trigger, selection) => {
+          const controller = inputHub.inputTriggers(sessionId)
+          if (controller === undefined) throw new Error('conversation input trigger is unavailable')
+          shell.dismissPopup()
+          const snapshot = shell.snapshot
+          controller.toggleSource(source, {
+            trigger,
+            query: '',
+            quoted: false,
+            position: snapshot.draft.slice(0, selection.start).trim() === '' ? 'leading' : 'inline',
+            span: { ...selection, draftRev: snapshot.draftRev },
+          })
+        },
         stop: () => {
           scopedConversation(sessions, sessionId).cancel().catch(() => {
             // Stop failure is published through Session promptError.
@@ -348,6 +358,7 @@ export function apply(ctx: Context): void {
           return result.ok && result.value.matched
         },
         hooks: {
+          menuActions: composerMenuActions.actions,
           notices: shell.notices,
           lexicon: shell.lexicon,
           menuLauncher: inputTriggers?.launcher ?? ABSENT_MENU_LAUNCHER,

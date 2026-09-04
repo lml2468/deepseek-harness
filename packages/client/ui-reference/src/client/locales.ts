@@ -13,6 +13,7 @@ export const NS = 'reference'
  * bucketing they name is the one shared {@link relativeTime} in ui-primitives.
  */
 export const zh = {
+  'menu.action': '引用文件或对话',
   'section.files': '文件与文件夹',
   'section.sessions': '对话',
   'candidate.noCwd': '（无工作目录）',
@@ -37,6 +38,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
+  'menu.action': 'Reference files or sessions',
   'section.files': 'Files & folders',
   'section.sessions': 'Sessions',
   'candidate.noCwd': '(no cwd)',

@@ -26,6 +26,7 @@ import { $replaceDetectSpanWithText, $selectDetectSpan } from '../src/client/inp
 import type {
   ComposerAttachment, ComposerAttachmentsOwnerProps,
 } from '../src/client/contract/slots.ts'
+import type { ComposerMenuAction } from '../src/client/composer-menu-actions.ts'
 import type { DraftAttachmentId } from '../src/client/contract/input.ts'
 import { InputBar } from '../src/client/skeleton/InputBar.tsx'
 import type { InputBarProps } from '../src/client/skeleton/InputBar.tsx'
@@ -91,6 +92,7 @@ interface BenchOptions {
   commandMenuOpen?: boolean
   busyEnter?: 'queue' | 'steer'
   toggleCommandMenu?: (selection: { start: number; end: number }) => void
+  menuActions?: readonly ComposerMenuAction[]
 }
 
 /** One pending queue row (the runtime snapshot shape, as the dock tests build it). */
@@ -143,6 +145,15 @@ function bench(over?: BenchOptions) {
   const stop = vi.fn()
   const removeImage = vi.fn((id: DraftAttachmentId) => { shell.removeImage(id) })
   const menuLauncher = createSnapshotStore<string | null>(over?.commandMenuOpen === true ? 'command' : null)
+  const menuActions = createSnapshotStore<readonly ComposerMenuAction[]>(over?.menuActions ?? [{
+    id: 'commands',
+    order: 30,
+    group: 'capability',
+    label: () => '指令',
+    icon: null,
+    availability: () => ({ visible: true }),
+    invoke: (context) => { context.openInputTrigger('command', '/') },
+  }])
   const slotCalls: { key: string; owner: unknown }[] = []
   const renderSlot = ((key: string, owner: object) => {
     slotCalls.push({ key, owner })
@@ -185,7 +196,10 @@ function bench(over?: BenchOptions) {
       const preferred = over?.busyEnter ?? 'queue'
       return gesture === 'enter' ? preferred : preferred === 'queue' ? 'steer' : 'queue'
     },
-    toggleCommandMenu: over?.toggleCommandMenu ?? vi.fn(),
+    toggleInputTrigger: (_source, _trigger, selection) => {
+      (over?.toggleCommandMenu ?? vi.fn())(selection)
+    },
+    useMenuActions: bindSnapshotSelector(menuActions),
     useNotices: bindSnapshotSelector(shell.notices),
     useLexicon: bindSnapshotSelector(shell.lexicon),
     useMenuLauncher: bindSnapshotSelector(menuLauncher),
@@ -813,7 +827,7 @@ describe('running and lock semantics', () => {
     })
     expect(textarea.getAttribute('aria-disabled')).toBe('true')
     expect(placeholderOf(view.container)).toBe('父会话已离线，无法继续发送；仍可停止当前运行')
-    expect((view.getByLabelText('指令') as HTMLButtonElement).disabled).toBe(true)
+    expect((view.getByLabelText('添加内容') as HTMLButtonElement).disabled).toBe(true)
     expect(button.getAttribute('aria-label')).toBe('发送消息')
     expect(button.disabled).toBe(true)
     expect(interruptButton?.disabled).toBe(false)
@@ -861,7 +875,7 @@ describe('running and lock semantics', () => {
     const { textarea, view } = bench({ disabled: true })
     expect(textarea.getAttribute('aria-disabled')).toBe('true')
     expect(placeholderOf(view.container)).toBe('会话不可用')
-    expect((view.getByLabelText('指令') as HTMLButtonElement).disabled).toBe(true)
+    expect((view.getByLabelText('添加内容') as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('idle primary sends and disables on empty draft', () => {
@@ -994,7 +1008,7 @@ describe('running and lock semantics', () => {
     expect(editableOf(textarea)).toBe(false)
     expect(textarea.getAttribute('aria-haspopup')).toBe('menu')
     expect(textarea.getAttribute('aria-expanded')).toBe('false')
-    expect((view.getByLabelText('指令') as HTMLButtonElement).disabled).toBe(true)
+    expect((view.getByLabelText('添加内容') as HTMLButtonElement).disabled).toBe(true)
 
     fireEvent.click(textarea)
     fireEvent.keyDown(textarea, { key: 'Enter' })
@@ -1294,10 +1308,10 @@ describe('strips and variants', () => {
   })
 })
 
-describe('command launcher chrome and control seats', () => {
-  it('renders the command launcher; the Access chip is absent without the permissions projection; the control seats render EMPTY without entries', () => {
+describe('Composer menu chrome and control seats', () => {
+  it('renders the add-content launcher; the Access chip is absent without the permissions projection; the control seats render EMPTY without entries', () => {
     const { view, slotCalls } = bench()
-    expect(view.getByLabelText('指令')).toBeTruthy()
+    expect(view.getByLabelText('添加内容')).toBeTruthy()
     // Capability absent (no projection value): the chip renders nothing.
     expect(view.queryByLabelText(/^访问模式/)).toBeNull()
     // Every seat dispatched, nothing rendered (render passes may repeat; the
@@ -1312,16 +1326,49 @@ describe('command launcher chrome and control seats', () => {
     expect(view.queryByLabelText('Model')).toBeNull()
   })
 
-  it('passes the textarea selection to the command menu launcher and reflects its expanded state', () => {
+  it('invokes the registered command action with the current textarea selection', () => {
     const toggleCommandMenu = vi.fn()
-    const { view, shell, menuLauncher } = bench({ draft: 'draft text', toggleCommandMenu })
+    const { view, shell } = bench({ draft: 'draft text', toggleCommandMenu })
     act(() => { shell.editor.update(() => { $selectDetectSpan({ start: 2, end: 7 }) }, { discrete: true }) })
-    const launcher = view.getByLabelText('指令')
+    const launcher = view.getByLabelText('添加内容')
     expect(launcher.getAttribute('aria-expanded')).toBe('false')
     fireEvent.click(launcher)
-    expect(toggleCommandMenu).toHaveBeenCalledExactlyOnceWith({ start: 2, end: 7 })
-    act(() => { menuLauncher.set('command') })
     expect(launcher.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.click(view.getByRole('menuitem', { name: '指令' }))
+    expect(toggleCommandMenu).toHaveBeenCalledExactlyOnceWith({ start: 2, end: 7 })
+    expect(launcher.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('groups ordered actions, disables unavailable actions, and reports async failure before restoring focus', async () => {
+    let reject!: (reason: unknown) => void
+    const invoke = vi.fn(() => new Promise<void>((_resolve, rejectPromise) => { reject = rejectPromise }))
+    const { view, textarea } = bench({
+      menuActions: [
+        {
+          id: 'hidden', order: 0, group: 'attach', label: () => '隐藏', icon: null,
+          availability: () => ({ visible: false }), invoke: vi.fn(),
+        },
+        {
+          id: 'disabled', order: 10, group: 'attach', label: () => '不可用', icon: null,
+          availability: () => ({ visible: true, disabledReason: '当前不可用' }), invoke: vi.fn(),
+        },
+        {
+          id: 'async', order: 20, group: 'reference', label: () => '异步动作', icon: null,
+          availability: () => ({ visible: true }), invoke,
+        },
+      ],
+    })
+
+    fireEvent.click(view.getByLabelText('添加内容'))
+    expect(view.queryByRole('menuitem', { name: '隐藏' })).toBeNull()
+    expect((view.getByRole('menuitem', { name: '不可用' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(view.getByRole('separator')).toBeTruthy()
+    fireEvent.click(view.getByRole('menuitem', { name: '异步动作' }))
+    expect(invoke).toHaveBeenCalledOnce()
+
+    reject(new Error('动作失败'))
+    await vi.waitFor(() => { expect(view.getByRole('alert').textContent).toContain('动作失败') })
+    expect(document.activeElement).toBe(textarea)
   })
 
   it('the Access chip renders the projection value and submits a non-Full-access pick directly', async () => {
@@ -1486,7 +1533,7 @@ describe('command launcher chrome and control seats', () => {
   it('disabled locks the Access chip and command launcher (running does not)', () => {
     const permissions = { options: [{ value: 'workspace-write', name: 'workspace-write' }], currentValue: 'workspace-write' }
     const { view } = bench({ disabled: true, permissions })
-    expect((view.getByLabelText('指令') as HTMLButtonElement).disabled).toBe(true)
+    expect((view.getByLabelText('添加内容') as HTMLButtonElement).disabled).toBe(true)
     expect((view.getByLabelText(/^访问模式/) as HTMLButtonElement).disabled).toBe(true)
     cleanup()
     const live = bench({ running: true, permissions })

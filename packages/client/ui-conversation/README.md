@@ -15,6 +15,7 @@ English | [中文](README.zh.md)
 
 - [Conversation assembly](#conversation-assembly)
 - [Shell and standard props](#shell-and-standard-props)
+- [Hero and composer extensions](#hero-and-composer-extensions)
 - [Temporary composer entries](#temporary-composer-entries)
 - [Model Experience](#model-experience)
 - [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
@@ -47,6 +48,13 @@ The resident composer survives no-Session and Session transitions. The no-Sessio
 Default sends commit optimistically: Enter clears the draft, occurrence table, and undo history in the same transaction, keeps the composer in `plain`, and runs the send as a detached attempt, so typing and further sends continue during the flight. `sendSession` registers a Session submission echo (`session.beginSubmission`) with the delivery mode before serializing; Session derives the placement from that mode and its current running state, so idle sends use the transcript, busy Queue sends use QueueDock, and busy Steer sends use the pending-steering surface. It then yields one paint and encodes images through the browser's native `FileReader` data-URL path. Concurrent failures are restored together in submission order until the user edits the restored content; command submissions keep the frozen `submitting` phase. Detached attempts retain their image ids through admission and Session scope disposal. When an echo retires as observed, the durable image cache exposes its preview immediately, fetches the admitted attachment, replaces the preview with the canonical URL, and revokes each URL after its use ends. Direct subagent continuations skip local echoes because their transport does not preserve the browser request id.
 
 While a normal composer is running, its primary pointer action remains Stop when the draft is empty or input is unavailable. Actionable text or attachments switch the same seat to Queue Send; clearing or successfully submitting the draft restores Stop. The busy-Enter setting continues to select the Queue or Steer keyboard action. Continuable subagents keep separate Send and Stop actions ([decision](../../../.agents/notes/implemented/bug-fix/2026-08-20-running-draft-primary-send.md)).
+
+<a id="hero-and-composer-extensions"></a>
+## Hero and composer extensions
+
+Products can replace `conversation.hero.header`, add ordered `conversation.hero.content`, or arrange the already-constructed Hero nodes through `conversation.hero.layout`. These slots receive current Session and input snapshots for presentation only; the resident Workspace controls and composer remain owned by this package and preserve their component identity across no-Session and blank-Session states.
+
+`ctx.composerMenuActions` registers ordered entries in the resident `+` menu. Each entry computes visibility and its disabled reason from the current composer context and invokes its owning capability; the registry does not store capability state. Image attachment, reference, and command packages use this route. Persistent selections continue to use `conversation.input.left` or `conversation.input.right`.
 
 <a id="temporary-composer-entries"></a>
 ## Temporary composer entries

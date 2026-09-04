@@ -17,8 +17,9 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import clsx from 'clsx'
 import {
-  IconPlusOutline16, IconWarningOutline16, Toast, Tooltip,
+  IconPlusOutline16, IconWarningOutline16, Menu, Toast, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { MenuEntry } from '@deepseek-ai/dsh-client-ui-primitives'
 // Type-only: the `plan` projection key merge (the TodoDock posture — the
 // composer reads a host-computed value; the domain owns the key).
 import type {} from '@deepseek-ai/dsh-plan-mode/client'
@@ -41,16 +42,17 @@ export type InputBarProps = ComposerBarProps
 
 export const InputBar = memo(function InputBar({
   useSession, useInput, inputActions, keyboard, addImages, removeImage, draftImages,
-  resolveSubmitMode, toggleCommandMenu, stop, command, t,
-  renderSlot, useNotices, useLexicon, useMenuLauncher,
+  resolveSubmitMode, toggleInputTrigger, stop, command, t,
+  renderSlot, useMenuActions, useNotices, useLexicon, useMenuLauncher,
   useProjection, sessionId, variant, disabled: inert = false, blocked,
   workspacePickerOpen = false, onRequestWorkspace,
   placeholder, accessory,
 }: InputBarProps) {
   const input = useInput(s => s)
+  const menuActions = useMenuActions(value => value)
   const notice = useNotices(s => s)
   void useLexicon // hook seat stays bound by the inject compartment; text-ref decoration rides the shell's editor transforms
-  const commandMenuOpen = useMenuLauncher(source => source === 'command')
+  const triggerMenuOpen = useMenuLauncher(source => source !== null)
   const promptError = useSession(s => s.promptError) ?? null
   const running = useSession(s => s.running) ?? false
   const subagent = useSession(s => s.subagent) ?? null
@@ -74,7 +76,10 @@ export const InputBar = memo(function InputBar({
   // prompt failures): the seq keys the Toast so an identical repeated message
   // restarts the hold-then-fade cycle instead of reusing the faded one.
   const [toast, setToast] = useState<{ seq: number; text: string } | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [pendingMenuAction, setPendingMenuAction] = useState<string | null>(null)
   const toastSeq = useRef(0)
+  const imagePickerRef = useRef<HTMLInputElement>(null)
   const showToast = useCallback((text: string) => {
     toastSeq.current += 1
     setToast({ seq: toastSeq.current, text })
@@ -131,7 +136,7 @@ export const InputBar = memo(function InputBar({
   const workspaceTrigger = inert && !removed && onRequestWorkspace !== undefined
   const editorDisabled = removed || (locked && !workspaceTrigger)
   const editable = live && !locked && !machineBusy
-  const canSteerQueue = !locked && !machineBusy && !commandMenuOpen && empty && running && subagent === null
+  const canSteerQueue = !locked && !machineBusy && !triggerMenuOpen && empty && running && subagent === null
     && input.queue.some(row => row.placement === 'queued')
 
   useEffect(() => {
@@ -295,8 +300,51 @@ export const InputBar = memo(function InputBar({
     editor?.getRootElement()?.focus({ preventScroll: true })
   }
 
-  const onToggleCommandMenu = (): void => {
-    if (keyboard !== undefined) toggleCommandMenu?.(keyboard.caretSpan())
+  const menuContext = input === undefined || sessionId === undefined || keyboard === undefined
+    ? undefined
+    : {
+      sessionId,
+      input,
+      canAddImages: canAcceptDrop,
+      openInputTrigger: (source: string, trigger: '/' | '@') => {
+        toggleInputTrigger?.(source, trigger, keyboard.caretSpan())
+      },
+      selectImages: () => { imagePickerRef.current?.click() },
+    }
+  const availableMenuActions = menuContext === undefined
+    ? []
+    : menuActions.flatMap((action) => {
+      const availability = action.availability(menuContext)
+      return availability.visible ? [{ action, disabledReason: availability.disabledReason }] : []
+    })
+  const menuEntries: MenuEntry[] = []
+  let previousGroup: string | undefined
+  for (const row of availableMenuActions) {
+    if (previousGroup !== undefined && previousGroup !== row.action.group) {
+      menuEntries.push({ type: 'separator', id: `separator:${previousGroup}:${row.action.group}` })
+    }
+    previousGroup = row.action.group
+    menuEntries.push({
+      id: row.action.id,
+      label: row.disabledReason === undefined
+        ? row.action.label()
+        : <span title={row.disabledReason}>{row.action.label()}</span>,
+      icon: row.action.icon,
+      disabled: pendingMenuAction !== null || row.disabledReason !== undefined,
+    })
+  }
+  const invokeMenuAction = (id: string): void => {
+    if (menuContext === undefined) return
+    const row = availableMenuActions.find(candidate => candidate.action.id === id)
+    if (row === undefined || row.disabledReason !== undefined) return
+    setMenuOpen(false)
+    setPendingMenuAction(id)
+    Promise.resolve(row.action.invoke(menuContext))
+      .catch((error: unknown) => {
+        showToast(error instanceof Error ? error.message : String(error))
+        editor?.getRootElement()?.focus({ preventScroll: true })
+      })
+      .finally(() => { setPendingMenuAction(null) })
   }
 
   // The no-session Workspace trigger: the resident editable div acts as the
@@ -391,6 +439,18 @@ export const InputBar = memo(function InputBar({
         onClick={workspaceTrigger ? onRequestWorkspace : undefined}
         onPointerDown={workspaceTrigger ? (e) => { e.stopPropagation() } : undefined}
       >
+        <input
+          ref={imagePickerRef}
+          className={css.fileInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          multiple
+          tabIndex={-1}
+          onChange={(event) => {
+            intakeImages([...event.currentTarget.files ?? []])
+            event.currentTarget.value = ''
+          }}
+        />
         {sessionId !== undefined && (
           <div className={css.overlayAnchor}>{renderSlot('conversation.input.overlay', {})}</div>
         )}
@@ -438,20 +498,32 @@ export const InputBar = memo(function InputBar({
         </div>
         <div className={css.row}>
           <div className={css.tools}>
-            <Tooltip label={t('input.commands')} side="top" delayMs={500}>
-              <button
-                type="button"
-                className={css.add}
-                aria-label={t('input.commands')}
-                aria-haspopup="listbox"
-                aria-expanded={commandMenuOpen}
-                disabled={locked || toggleCommandMenu === undefined}
-                onMouseDown={keepFocus}
-                onClick={onToggleCommandMenu}
-              >
-                <IconPlusOutline16 size={14} />
-              </button>
-            </Tooltip>
+            <Menu
+              open={menuOpen}
+              items={menuEntries}
+              side="top"
+              onSelect={invokeMenuAction}
+              onClose={() => { setMenuOpen(false) }}
+              anchor={(
+                <Tooltip label={t('input.add')} side="top" delayMs={500}>
+                  <button
+                    type="button"
+                    className={css.add}
+                    aria-label={t('input.add')}
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    disabled={locked || machineBusy || menuEntries.length === 0}
+                    onMouseDown={keepFocus}
+                    onClick={() => {
+                      keyboard?.dismissPopup()
+                      setMenuOpen(open => !open)
+                    }}
+                  >
+                    <IconPlusOutline16 size={14} />
+                  </button>
+                </Tooltip>
+              )}
+            />
             <div className={css.modes}>
               {accessSelect}
               {sessionId === undefined ? null : renderSlot('conversation.input.plan', { locked })}
