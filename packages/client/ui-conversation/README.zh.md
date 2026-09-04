@@ -52,7 +52,7 @@ Session 首次绑定或缓存的 Session 成为 current 时，shell 会在渲染
 <a id="hero-and-composer-extensions"></a>
 ## Hero 与 composer 扩展
 
-产品可以替换 `conversation.hero.header`、增加有序的 `conversation.hero.content`，或通过 `conversation.hero.layout` 排列已经构造好的 Hero 节点。这些 slot 只接收当前 Session 和输入快照用于呈现；常驻 Workspace 控件和 composer 仍由本包持有，并在无 Session 与空白 Session 状态间保持组件身份。
+产品可以替换 `conversation.hero.header`、通过 `conversation.hero.content` 在 composer 前增加有序的发现内容、通过 `conversation.hero.footer` 在上下文控件后增加有序的辅助内容，或通过 `conversation.hero.layout` 排列已经构造好的 Hero 节点。这些 slot 只接收当前 Session 和输入快照用于呈现；常驻 Workspace 控件和 composer 仍由本包持有，并在无 Session 与空白 Session 状态间保持组件身份。
 
 `ctx.composerMenuActions` 在常驻 `+` 菜单中注册有序入口。每个条目根据当前 composer 上下文计算可见性和禁用原因，并调用所属能力；registry 不保存能力状态。图片附件、引用和命令包使用该入口。持续选择仍使用 `conversation.input.left` 或 `conversation.input.right`。
 

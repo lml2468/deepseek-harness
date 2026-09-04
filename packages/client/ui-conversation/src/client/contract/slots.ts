@@ -126,8 +126,10 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'conversation.hero.agentPreset': { kind: 'single'; scope: 'root'; owner: HeroAgentPresetOwnerProps }
     /** Product-owned heading for the resident blank-Session Hero. */
     'conversation.hero.header': { kind: 'single'; scope: 'session-maybe'; owner: ConversationHeroContext }
-    /** Ordered product content between Hero context controls and the composer. */
+    /** Ordered product content between the Hero header and composer. */
     'conversation.hero.content': { kind: 'list'; scope: 'session-maybe'; owner: ConversationHeroContext }
+    /** Ordered product content below the Hero composer and context controls. */
+    'conversation.hero.footer': { kind: 'list'; scope: 'session-maybe'; owner: ConversationHeroContext }
     /** Optional composition owner for the resident Hero nodes. */
     'conversation.hero.layout': { kind: 'single'; scope: 'session-maybe'; owner: ConversationHeroLayoutOwnerProps }
     /** Full-width entries above the composer card. */
@@ -202,6 +204,8 @@ export interface ConversationHeroLayoutOwnerProps extends ConversationHeroContex
   readonly content: ReactNode
   /** The one resident DSH composer, including its execution-state dock. */
   readonly composer: ReactNode
+  /** Ordered product content registered in `conversation.hero.footer`. */
+  readonly footer: ReactNode
 }
 
 /** Header actions derive their state from standard Session props. */
@@ -354,6 +358,7 @@ export type ConversationSlotProps =
     | 'conversation.hero.agentPreset'
     | 'conversation.hero.header'
     | 'conversation.hero.content'
+    | 'conversation.hero.footer'
     | 'conversation.hero.layout'
   >
   & InjectFace<ConversationInjected>

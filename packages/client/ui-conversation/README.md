@@ -52,7 +52,7 @@ While a normal composer is running, its primary pointer action remains Stop when
 <a id="hero-and-composer-extensions"></a>
 ## Hero and composer extensions
 
-Products can replace `conversation.hero.header`, add ordered `conversation.hero.content`, or arrange the already-constructed Hero nodes through `conversation.hero.layout`. These slots receive current Session and input snapshots for presentation only; the resident Workspace controls and composer remain owned by this package and preserve their component identity across no-Session and blank-Session states.
+Products can replace `conversation.hero.header`, add ordered discovery content before the composer through `conversation.hero.content`, add ordered supporting content after its context controls through `conversation.hero.footer`, or arrange the already-constructed Hero nodes through `conversation.hero.layout`. These slots receive current Session and input snapshots for presentation only; the resident Workspace controls and composer remain owned by this package and preserve their component identity across no-Session and blank-Session states.
 
 `ctx.composerMenuActions` registers ordered entries in the resident `+` menu. Each entry computes visibility and its disabled reason from the current composer context and invokes its owning capability; the registry does not store capability state. Image attachment, reference, and command packages use this route. Persistent selections continue to use `conversation.input.left` or `conversation.input.right`.
 

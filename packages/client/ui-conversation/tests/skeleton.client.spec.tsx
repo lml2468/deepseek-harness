@@ -178,7 +178,7 @@ function mount(
     if (key === 'conversation.hero.layout' || key === 'conversation.hero.header') {
       return opts?.fallback ?? null
     }
-    if (key === 'conversation.hero.content') return null
+    if (key === 'conversation.hero.content' || key === 'conversation.hero.footer') return null
     if (key === 'conversation.input.model' || key === 'conversation.input.plan') {
       seatOwners.push({ key, owner })
     }
@@ -593,6 +593,7 @@ describe('ConversationRoot resident composer', () => {
     const chip = b.view.getByRole('button', { name: '选择工作区' })
     expect((chip as HTMLButtonElement).disabled).toBe(false)
     expect(b.slotCalls).toContain('conversation.hero.workspace')
+    expect(b.slotCalls).toContain('conversation.hero.footer')
     // The agent-preset chip sits in the same row, for the same reason: both
     // choices are only open before the first message.
     expect(b.slotCalls).toContain('conversation.hero.agentPreset')

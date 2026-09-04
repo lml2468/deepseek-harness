@@ -10,7 +10,7 @@ Status: implemented
 
 ## Decision
 
-`ui-conversation` 保持唯一常驻 composer，并暴露三个仅用于呈现的 Hero slot。`conversation.hero.header` 替换默认标题，`conversation.hero.content` 将产品内容排列在 DSH 上下文控件与 composer 之间，`conversation.hero.layout` 可以排列已经构造好的标题、控件、内容和 composer 节点。布局持有者只接收当前 Session 和输入快照，没有修改权限。无 Session、空白 Session、加载中和创建失败状态保持同一个 composer 组件身份。
+`ui-conversation` 保持唯一常驻 composer，并暴露仅用于呈现的 Hero slot。`conversation.hero.header` 替换默认标题，`conversation.hero.content` 将产品发现内容排列在 composer 之前，`conversation.hero.footer` 将辅助内容排列在 DSH 上下文控件之后，`conversation.hero.layout` 可以排列已经构造好的标题、控件、内容、composer 和 footer 节点。默认布局将 composer 与其上下文控件组成一组，并把这一组放在发现内容之后。布局持有者只接收当前 Session 和输入快照，没有修改权限。无 Session、空白 Session、加载中和创建失败状态保持同一个 composer 组件身份。
 
 `ComposerMenuActionRegistry` 是对常驻 `+` 菜单入口排序的 root 服务。条目提供标签、图标、可用性和调用回调；registry 不持有能力状态。图片附件、引用和命令插件通过该服务注册既有动作。权限、模型和产品连接等持续选择仍是独立的 composer 控件。
 

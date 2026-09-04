@@ -21,13 +21,13 @@
      live width as --dsh-conversation-column-width (px, via ResizeObserver —
      container-type would re-anchor the subtree's portal-free position:fixed
      descendants) and the clamp keeps a 680px floor (a step under the figma
-     748px — the full-width reading felt wide on every screen), takes 64% of
+     748px — the full-width reading felt wide on every screen), takes 74% of
      wider columns, and caps at 920px for line-length
      readability. A dragged user preference (--dsh-chat-user-width, published
      by the width handles) replaces the adaptive term wholesale. */
   --dsh-chat-content-width: var(
     --dsh-chat-user-width,
-    clamp(680px, calc(var(--dsh-conversation-column-width, 0px) * 0.64), 920px)
+    clamp(680px, calc(var(--dsh-conversation-column-width, 0px) * 0.74), 920px)
   );
   --dsh-composer-card-max-width: calc(var(--dsh-chat-content-width) + 32px);
   --dsh-composer-side-clearance: 16px;
@@ -410,17 +410,14 @@
   left: 0;
 }
 
-/* Hero phase: the composer stack (hero chrome + workspace row + card) is
-   flex-centered in the column; composer phase docks it at the bottom. Flex,
+/* Hero phase: the composer stack starts near the top of the column; composer
+   phase docks it at the bottom. Flex,
    NOT absolute+transform: a transform would make this box the containing
    block for position:fixed descendants (pickers/modals), shrinking them. */
 .composerHero {
   align-self: center;
-  /* figma 75:8208 drew 12 between all three rows; the workspace row now sits
-     8 above the card (its margin-top restores 12 under the hero chrome). */
-  gap: 8px;
-  /* Foot inside the centered box floats the stack a bit above true center. */
-  padding-bottom: 32px;
+  gap: 18px;
+  padding: clamp(72px, 12vh, 104px) 0 48px;
   /* Card cap + both clearances: the hero input card lands at exactly the same
      width as the docked composer at every viewport. */
   width: min(calc(var(--dsh-composer-card-max-width) + 2 * var(--dsh-composer-side-clearance)), 100%);
@@ -432,16 +429,16 @@
   align-items: center;
   gap: 2px;
   min-width: 0;
-  margin-top: 4px;
-  /* figma drew px 8; nudged +12 so the chip's folder glyph lines up closer to
-     the card's inner controls below. */
-  padding-left: 20px;
+  min-height: 40px;
+  padding: 4px 20px 8px;
+  border-radius: 0 0 18px 18px;
+  background: var(--dsw-alias-bg-layer-1);
 }
 
-/* Hero: the composer sits inside the session scroll body; center there so
-   the tree seat matches active (sticky footer) without a Root remount. */
+/* Hero: the composer stays in the session scroll body and begins at the top;
+   the tree seat still matches active (sticky footer) without a Root remount. */
 .root[data-phase='hero'] .scrollBody {
-  justify-content: center;
+  justify-content: flex-start;
   overflow-y: auto;
 }
 

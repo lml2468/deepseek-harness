@@ -75,6 +75,7 @@ export interface HeroLayoutProps {
   contextControls: ReactNode
   content: ReactNode
   composer: ReactNode
+  footer: ReactNode
   active: boolean
 }
 
@@ -134,7 +135,7 @@ function HeroFish({ hovering }: { hovering: boolean }) {
 /**
  * Render the hero chrome (headline only; no composer, no workspace row).
  * @param props - see {@link HeroShellProps}.
- * @returns the centered hero element tree.
+ * @returns the Hero headline element tree.
  */
 export function HeroShell({ t, renderSlot }: HeroShellProps) {
   const [hovering, setHovering] = useState(false)
@@ -162,16 +163,19 @@ export function HeroShell({ t, renderSlot }: HeroShellProps) {
 }
 
 /** WorkBuddy-density default layout for the resident Hero and composer. */
-export function HeroLayout({ header, contextControls, content, composer, active }: HeroLayoutProps) {
+export function HeroLayout({ header, contextControls, content, composer, footer, active }: HeroLayoutProps) {
   return (
     <div className={css.root} data-hero-active={active || undefined}>
       <div className={css.stack}>
         {header}
+        {content}
         <div className={css.body}>
-          {contextControls}
-          {content}
-          {composer}
+          <div className={css.composerFrame}>
+            <div className={css.contextFrame}>{contextControls}</div>
+            {composer}
+          </div>
         </div>
+        {footer}
       </div>
     </div>
   )

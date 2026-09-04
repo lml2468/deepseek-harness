@@ -214,6 +214,7 @@ export function apply(ctx: Context): void {
       'conversation.hero.agentPreset': { kind: 'single', scope: 'root' },
       'conversation.hero.header': { kind: 'single', scope: 'session-maybe' },
       'conversation.hero.content': { kind: 'list', scope: 'session-maybe' },
+      'conversation.hero.footer': { kind: 'list', scope: 'session-maybe' },
       'conversation.hero.layout': { kind: 'single', scope: 'session-maybe' },
     },
     inject: (sessionId: SessionId | undefined): ConversationInjected => ({

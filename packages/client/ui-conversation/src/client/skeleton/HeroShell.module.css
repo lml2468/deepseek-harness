@@ -10,13 +10,16 @@
    the resident composer keeps its DOM identity. Outside the Hero, both
    wrappers dissolve from layout without moving ownership of the composer. */
 .root:not([data-hero-active]),
-.root:not([data-hero-active]) .stack {
+.root:not([data-hero-active]) .stack,
+.root:not([data-hero-active]) .body,
+.root:not([data-hero-active]) .composerFrame,
+.root:not([data-hero-active]) .contextFrame {
   display: contents;
 }
 
 .root[data-hero-active] {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   width: 100%;
   min-height: 0;
@@ -28,8 +31,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  /* figma 75:8208: 12 between title block / workspace / card. */
-  gap: 12px;
+  gap: 18px;
   width: 100%;
   max-width: var(--dsh-composer-card-max-width);
   overflow: visible;
@@ -105,9 +107,19 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   min-width: 0;
   overflow: visible;
+}
+
+.composerFrame {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.contextFrame {
+  order: 1;
 }
 
 .body > * {

@@ -40,7 +40,7 @@ function readWidthPreference(): number | null {
 function resolveContentWidth(columnWidth: number, preference: number | null): number {
   const max = Math.max(CONTENT_MIN, columnWidth - CONTENT_EDGE_BUDGET)
   if (preference !== null) return Math.min(Math.max(preference, CONTENT_MIN), max)
-  return Math.max(680, Math.min(columnWidth * 0.64, 920))
+  return Math.max(680, Math.min(columnWidth * 0.74, 920))
 }
 
 /** One transcript width handle: pointer capture + rAF-throttled symmetric
@@ -253,7 +253,7 @@ export function ConversationRoot({
 
   // While a session is still replaying (loading + blank) the hero/docked
   // choice is unknowable — render the composer hidden instead of flashing
-  // the centered hero and snapping to the docked bar (or vice versa).
+  // the top-aligned hero and snapping to the docked bar (or vice versa).
   // Exemption: a session the list summary already proves blank can only
   // land on the hero, so hiding would blank the column for the whole
   // history round-trip (the startup auto-selection flash) for nothing.
@@ -352,6 +352,9 @@ export function ConversationRoot({
   const heroContent = hero
     ? renderSlot('conversation.hero.content', heroContext)
     : null
+  const heroFooter = hero
+    ? renderSlot('conversation.hero.footer', heroContext)
+    : null
   const composerBody = (
     <>
       {zone !== undefined && renderSlot('conversation.input.dock', zone)}
@@ -366,6 +369,7 @@ export function ConversationRoot({
         contextControls: hero ? heroWorkspaceRow : null,
         content: heroContent,
         composer: composerBody,
+        footer: heroFooter,
       }, {
         fallback: (
           <HeroLayout
@@ -373,6 +377,7 @@ export function ConversationRoot({
             contextControls={hero ? heroWorkspaceRow : null}
             content={heroContent}
             composer={composerBody}
+            footer={heroFooter}
             active={hero}
           />
         ),

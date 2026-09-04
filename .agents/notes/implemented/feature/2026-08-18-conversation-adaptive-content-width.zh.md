@@ -10,7 +10,7 @@ Status: implemented
 
 ## 决策
 
-**宽度轴变为"用户覆盖 + 自适应 clamp"。** `ConversationRoot.module.css` 声明 `--dsh-chat-content-width: var(--dsh-chat-user-width, clamp(680px, calc(var(--dsh-conversation-column-width, 0px) * 0.64), 920px))`。下限 680px——比 figma 的 748px 低一档，因为满宽阅读在各种屏幕上都显宽——更宽的列取列宽的 64%，920px 封顶保证行长可读性（基准字号下约 113 字符）。拖拽偏好存在时整体替换自适应项。
+**宽度轴变为"用户覆盖 + 自适应 clamp"。** `ConversationRoot.module.css` 声明 `--dsh-chat-content-width: var(--dsh-chat-user-width, clamp(680px, calc(var(--dsh-conversation-column-width, 0px) * 0.74), 920px))`。下限 680px——比 figma 的 748px 低一档，因为满宽阅读在各种屏幕上都显宽——更宽的列取列宽的 74%，920px 封顶保证行长可读性（基准字号下约 113 字符）。拖拽偏好存在时整体替换自适应项。
 
 **列宽由 ResizeObserver 发布，不用容器查询。** 组件把根节点的 `offsetWidth` 以 px 发布为 `--dsh-conversation-column-width`（与既有 composer seat 高度 observer 相同的 callback-ref 模式）。拒绝 `container-type: inline-size`：会话子树内有不经 portal 的 `position: fixed` 后代（Tooltip、Menu、JsonTree 复制锚点），尺寸容器会捕获它们的视口定位——与 `.composerHero` 注释记录的 transform 陷阱同类。拒绝变量里的裸 `%`：自定义属性百分比在各消费点按不同包含块解析，破坏输入卡 = W + 32px 不变量；拒绝 `vw`：列不等于视口（侧栏折叠只改列宽）。
 
@@ -32,4 +32,4 @@ Status: implemented
 
 ## 影响
 
-普通窗口的阅读宽度比 figma 基线略窄（下限 680px）。宽列正文最多放宽到 920px，拖拽可取 `[640px, 列宽 − 176px]` 内任意值，两者都不触碰任何派生表面：输入卡、dock 卡片、takeover 面板和回底公式沿用它们本就消费的宽度轴。手柄（按列居中）与内容盒（按滚动条预留后居中）之间约 4px 的已知偏差完全落在 40px 热区内。680px / 64% / 920px 三个数值在 `ConversationRoot.module.css` 一处声明、由组件内 `resolveContentWidth` 镜像；重调它们不影响其他代码。
+普通窗口的阅读宽度比 figma 基线略窄（下限 680px）。宽列正文最多放宽到 920px，拖拽可取 `[640px, 列宽 − 176px]` 内任意值，两者都不触碰任何派生表面：输入卡、dock 卡片、takeover 面板和回底公式沿用它们本就消费的宽度轴。手柄（按列居中）与内容盒（按滚动条预留后居中）之间约 4px 的已知偏差完全落在 40px 热区内。680px / 74% / 920px 三个数值在 `ConversationRoot.module.css` 一处声明、由组件内 `resolveContentWidth` 镜像；重调它们不影响其他代码。
