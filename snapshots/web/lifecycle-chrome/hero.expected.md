@@ -20,7 +20,7 @@
 - button "Settings":
   - img
   - text: Settings
-- text: Into the Unknown Preview
+- text: What can I help you with?
 - button "Choose workspace":
   - img
   - text: workspace
@@ -31,13 +31,14 @@
   - img
 - textbox "Describe what you want to build... / commands, @ files or sessions":
   - paragraph
-- button "Commands":
+- button "Add content":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img
 - button "Send message" [disabled]
-- text: Details
-- button "Close details"
+- text: Tool
+- button "Close details":
+  - img
 - text: Click a tool row in the message flow to view its details

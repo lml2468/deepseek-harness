@@ -59,7 +59,7 @@
 - img
 - text: permission preset read-only
 - textbox "Message or run a task... / commands, @ files or sessions"
-- button "Commands":
+- button "Add content":
   - img
 - 'button "Access mode, current: Read Only"': Read Only
 - button "Select model, current DeepSeek-V4-Flash":
