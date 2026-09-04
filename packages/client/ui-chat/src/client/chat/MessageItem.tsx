@@ -4,6 +4,7 @@ import type { PendingSubmission } from '@deepseek-ai/dsh-api-session-controller/
 import type { MessageImageSource } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import { JsonBlock, projectUserText, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatNodeOwnerProps, ChatNodeViewProps, ChatViewSlotProps } from '../contract/slots.ts'
+import type { PropsRenderSlots } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelRetryNode, TurnErrorNode, UserMessageNode } from '../contract/snapshot.ts'
 import { CompactionItem } from './CompactionItem.tsx'
 import { ContextInjectionRow } from './ContextInjectionRow.tsx'
@@ -115,9 +116,10 @@ function ModelRetryItem({ node, active, t }: {
 }
 
 /** Persistent, turn-positioned feedback for a terminal failure. */
-function TurnErrorItem({ node, t }: {
+function TurnErrorItem({ node, t, actions }: {
   node: TurnErrorNode
   t: ChatViewSlotProps['t']
+  actions?: ReactNode
 }) {
   return (
     <div className={css.turnErrorRow} role="status">
@@ -127,6 +129,7 @@ function TurnErrorItem({ node, t }: {
         <span className={css.turnErrorMessage}>{failureMessage(node.message, node.code, t)}</span>
       </div>
       {node.code !== undefined && <code className={css.turnErrorCode}>{node.code}</code>}
+      {actions !== undefined && <div className={css.turnErrorActions}>{actions}</div>}
     </div>
   )
 }
@@ -319,8 +322,10 @@ export const RetryNodeView = memo(function RetryNodeView({ node, t }: ChatNodeVi
 })
 
 /** Terminal turn-error keyed Chat renderer. */
-export const TurnErrorNodeView = memo(function TurnErrorNodeView({ node, t }: ChatNodeViewProps<'turn-error'>) {
-  return <TurnErrorItem node={node.data} t={t} />
+export const TurnErrorNodeView = memo(function TurnErrorNodeView({
+  node, t, renderSlot,
+}: ChatNodeViewProps<'turn-error'> & PropsRenderSlots<'conversation.turn.error.actions'>) {
+  return <TurnErrorItem node={node.data} t={t} actions={renderSlot('conversation.turn.error.actions', { node: node.data })} />
 })
 
 /** Max-tokens turn-end notice keyed Chat renderer. */

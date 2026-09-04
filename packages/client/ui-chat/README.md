@@ -12,6 +12,7 @@ The browser Chat target for Conversation assembly. It registers Chat event defin
 
 ## Table of Contents
 
+- [Workbench views](#workbench-views)
 - [System prompt row](#system-prompt-row)
 - [Turn token usage](#turn-token-usage)
 - [Turn Process Folding](#turn-process-folding)
@@ -19,6 +20,13 @@ The browser Chat target for Conversation assembly. It registers Chat event defin
 - [Model Experience](#model-experience)
 - [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
 - [Dev Note](#dev-note)
+
+-----
+
+<a id="workbench-views"></a>
+## Workbench views
+
+The Session-scoped `conversation.details.view` list adds right-hand Workbench views without replacing Chat. `ctx.conversationDetails.open(viewId, focus?)` selects a registered view for the current mounted Session and opens the layout-owned details column; the view receives the optional focus string and acknowledges it through `completeFocus()`. The built-in `tool` view owns official Tool details. Removing an active registration selects the first remaining view or closes the column when none remain.
 
 -----
 

@@ -17,7 +17,7 @@ import type { ToolCallId, SelectionTarget } from './store.ts'
 import type { ChatConversationViewNode, ChatNode, ChatNodeKind } from './chat-nodes.ts'
 import type {
   ChatNodeProcessSource, ChatNodeSource, ChatSnapshot, ChatTurnProcessPresentation, CommandNode,
-  CompactionSummaryNode, ToolCallBlock,
+  CompactionSummaryNode, ToolCallBlock, TurnErrorNode,
 } from './snapshot.ts'
 import type { TurnProcessSpec } from './turn-process.ts'
 import type { TranscriptViewMode } from '../../chat-settings.ts'
@@ -41,6 +41,11 @@ export interface TurnTailOwnerProps {
 /** Owner currency of finalized-assistant actions. */
 export interface AssistantActionOwnerProps {
   messageId: MessageId
+}
+
+/** Extension actions beside one terminal Turn failure. */
+export interface TurnErrorActionOwnerProps {
+  node: TurnErrorNode
 }
 
 /** Optional prose file-mention provider consumed by Chat. */
@@ -108,6 +113,18 @@ export interface DetailsToolOwnerProps {
   cwd?: string | undefined
 }
 
+/** One registered right-hand Workbench View. */
+export interface DetailsViewTab {
+  id: string
+  label: string
+}
+
+/** Owner state addressed to the active Workbench View. */
+export interface DetailsViewOwnerProps {
+  focus: string | null
+  completeFocus(): void
+}
+
 /** Command-row owner share. */
 export interface CommandRowOwnerProps {
   node: CommandNode
@@ -167,14 +184,24 @@ export type MessageImagesProps = PropsRuntime<'conversation.message.images'> & P
 /** Details-panel callbacks. */
 export interface DetailsInjected {
   closeDetails: () => void
+  completeDetailsFocus: () => void
+  hooks: { detailsViews: SnapshotStore<readonly DetailsViewTab[]> }
+  selectDetailsView: (viewId: string) => void
 }
 
 /** Full details-panel props. */
 export type DetailsSlotProps =
   PropsRuntime<'details'>
-  & PropsRenderSlots<'conversation.details.tool'>
+  & PropsRenderSlots<'conversation.details.view'>
   & PropsStore<ChatStore>
   & InjectFace<DetailsInjected>
+  & PropsLocale<'chat'>
+
+/** Built-in Tool Workbench View props. */
+export type ToolDetailsViewProps =
+  PropsRuntime<'conversation.details.view'>
+  & PropsRenderSlots<'conversation.details.tool'>
+  & PropsStore<ChatStore>
   & PropsLocale<'chat'>
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -189,6 +216,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 
   interface SlotMap {
+    /** Ordered right-hand Workbench Views; only the selected id renders. */
+    'conversation.details.view': { kind: 'list'; scope: 'session'; owner: DetailsViewOwnerProps }
     /**
      * Final Chat node renderer, keyed by `ChatNodeKind`. The component receives
      * the typed node, shared Chat actions, and Turn-data hook. Reusing a key
@@ -226,6 +255,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      * that entry. With no entries, the standard action row remains unchanged.
      */
     'conversation.chat.assistant-actions': { kind: 'list'; scope: 'session'; owner: AssistantActionOwnerProps }
+    /** Ordered product actions beside a terminal Turn failure. */
+    'conversation.turn.error.actions': { kind: 'list'; scope: 'session'; owner: TurnErrorActionOwnerProps }
     /**
      * Whole details-panel body for the selected Tool call. The component receives
      * the running or settled block and optional workspace root. A registration

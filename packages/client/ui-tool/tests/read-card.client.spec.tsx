@@ -18,9 +18,10 @@ import { createChatStore } from '@deepseek-ai/dsh-client-ui-chat/src/client/stor
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
 import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 import { zh as chatZh } from '@deepseek-ai/dsh-client-ui-chat/src/client/locale.ts'
-import { DetailsPanel } from '@deepseek-ai/dsh-client-ui-chat/src/client/details/DetailsPanel.tsx'
 import { ReadRow, readToolview } from '../src/client/tool/toolviews/read-row.tsx'
-import { renderToolDetails, toolChatSnapshot, useEmptyTrajectory } from './tool-details-render.client.tsx'
+import {
+  renderToolDetails, ToolWorkbenchFixture as DetailsPanel, toolChatSnapshot, useEmptyTrajectory,
+} from './tool-details-render.client.tsx'
 
 afterEach(cleanup)
 

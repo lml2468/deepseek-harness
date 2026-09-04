@@ -12,6 +12,7 @@ Conversation 组装的浏览器 Chat target。本包注册 Chat event definition
 
 ## 目录
 
+- [Workbench 视图](#workbench-views)
 - [系统提示词行](#system-prompt-row)
 - [轮次 token 用量](#turn-token-usage)
 - [轮次过程折叠](#turn-process-folding)
@@ -19,6 +20,13 @@ Conversation 组装的浏览器 Chat target。本包注册 Chat event definition
 - [模型体验](#model-experience)
 - [已知限制与暂缓事项](#known-limitations-and-deferred-work)
 - [开发备注](#dev-note)
+
+-----
+
+<a id="workbench-views"></a>
+## Workbench 视图
+
+Session 级 `conversation.details.view` 列表可以增加右侧 Workbench 视图而不替换 Chat。`ctx.conversationDetails.open(viewId, focus?)` 为当前已挂载 Session 选择一个已注册视图，并打开由 layout 持有的详情栏；视图接收可选 focus 字符串，并通过 `completeFocus()` 确认消费。内置 `tool` view 持有官方 Tool 详情。活动注册被移除时选择剩余的第一个 view；没有 view 时关闭详情栏。
 
 -----
 

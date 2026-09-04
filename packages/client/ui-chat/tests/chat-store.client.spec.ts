@@ -4,7 +4,12 @@ import { createChatStore } from '../src/client/stores.ts'
 describe('createChatStore', () => {
   it('starts without a selected Chat target', () => {
     const store = createChatStore().create()
-    expect(store.store.getSnapshot()).toEqual({ selection: null, turnProcesses: [] })
+    expect(store.store.getSnapshot()).toEqual({
+      selection: null,
+      detailsView: null,
+      detailsFocus: null,
+      turnProcesses: [],
+    })
   })
 
   it('selects and clears one Chat details target', () => {
@@ -14,6 +19,24 @@ describe('createChatStore', () => {
       .toEqual({ turnSeq: 3, callId: 'c1', toolName: 'bash' })
     store.actions.select(null)
     expect(store.store.getSnapshot().selection).toBeNull()
+  })
+
+  it('opens and clears one Workbench View with its focus target', () => {
+    const store = createChatStore().create()
+    store.actions.openDetailsView('results', 'artifact-1')
+    expect(store.store.getSnapshot()).toMatchObject({
+      detailsView: 'results',
+      detailsFocus: 'artifact-1',
+    })
+
+    store.actions.clearDetailsFocus()
+    expect(store.store.getSnapshot().detailsFocus).toBeNull()
+
+    store.actions.clearDetailsView()
+    expect(store.store.getSnapshot()).toMatchObject({
+      detailsView: null,
+      detailsFocus: null,
+    })
   })
 
   it('creates independent instances', () => {

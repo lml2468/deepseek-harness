@@ -13,13 +13,13 @@ import type { SessionProviderComponent } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionPendingInteractionSnapshot } from '@deepseek-ai/dsh-client-ui-session/client'
 import { EMPTY_CONVERSATION_SNAPSHOT } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {
-  DetailsSlotProps, DetailsToolOwnerProps, RunningToolCall, SelectionTarget,
+  DetailsToolOwnerProps, RunningToolCall, SelectionTarget, ToolDetailsViewProps,
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { createChatStore } from '../src/client/stores.ts'
 import { AssistantMarkdown, type AssistantMarkdownProps } from '../src/client/chat/AssistantMarkdown.tsx'
 import { StatsLine } from '../src/client/chat/StatsLine.tsx'
-import { DetailsPanel } from '../src/client/details/DetailsPanel.tsx'
+import { ToolDetailsView } from '../src/client/details/DetailsPanel.tsx'
 import { zh } from '../src/client/locale.ts'
 import { chatSnapshotFixture } from './chat-snapshot-fixture.client.ts'
 
@@ -45,7 +45,7 @@ const SID = 's1' as SessionId
 const SessionProviderStub: SessionProviderComponent = ({ children }) => children
 
 /** Observe the owner currency without importing the Tool details renderer. */
-function renderToolDetailsProbe(owners?: DetailsToolOwnerProps[]): DetailsSlotProps['renderSlot'] {
+function renderToolDetailsProbe(owners?: DetailsToolOwnerProps[]): ToolDetailsViewProps['renderSlot'] {
   return (_key, owner) => {
     owners?.push(owner as unknown as DetailsToolOwnerProps)
     return <div data-testid="tool-details-seat" />
@@ -136,7 +136,9 @@ describe('render branch tails', () => {
       { ids: [], byId: {}, current: undefined, phase: 'ready', subagentsByParent: {}, jobsBySession: {}, currentAddress: undefined })
     const workspaces = emptyWorkspaces()
     const view = render(
-      <DetailsPanel
+      <ToolDetailsView
+        focus={null}
+        completeFocus={() => {}}
         SessionProvider={SessionProviderStub}
         renderSlot={renderToolDetailsProbe()}
         sessionId={SID}
@@ -160,11 +162,9 @@ describe('render branch tails', () => {
         }}
         useStore={bindSnapshotSelector(chat)}
         actions={chat.actions}
-        closeDetails={vi.fn()}
         t={t}
       />,
     )
-    expect(view.getByText('详情')).toBeTruthy()
     expect(view.getByText('该调用不在当前窗口内')).toBeTruthy()
   })
 
@@ -198,7 +198,9 @@ describe('render branch tails', () => {
     const workspaces = emptyWorkspaces()
     const owners: DetailsToolOwnerProps[] = []
     const view = render(
-      <DetailsPanel
+      <ToolDetailsView
+        focus={null}
+        completeFocus={() => {}}
         SessionProvider={SessionProviderStub}
         renderSlot={renderToolDetailsProbe(owners)}
         sessionId={SID}
@@ -222,13 +224,11 @@ describe('render branch tails', () => {
         }}
         useStore={bindSnapshotSelector(chat)}
         actions={chat.actions}
-        closeDetails={vi.fn()}
         t={t}
       />,
     )
     // Chat resolves the selected sub-call and keeps its Code Dispatch parent
     // identity on the block handed to the Tool-owned details seat.
-    expect(view.getByText('read')).toBeTruthy()
     expect(view.getByTestId('tool-details-seat')).toBeTruthy()
     expect(owners).toHaveLength(1)
     expect(owners[0]?.block).toMatchObject({

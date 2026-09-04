@@ -277,6 +277,8 @@ function makeHarness(
     React.ComponentProps<typeof TurnTailNodeView>['renderSlotChain']
   const renderTurnTailSlot = (() => null) as unknown as
     React.ComponentProps<typeof TurnTailNodeView>['renderSlot']
+  let renderTurnErrorSlot = (() => null) as unknown as
+    React.ComponentProps<typeof TurnErrorNodeView>['renderSlot']
   let nodeSlotOverride: React.ComponentProps<typeof ChatNodeSeat>['renderSlot'] | undefined
   const renderNodeSlot = ((key: string, owner: object, opts?: {
     fallback?: React.ReactNode
@@ -314,7 +316,13 @@ function makeHarness(
       case 'model-retry':
         return <RetryNodeView {...nodeProps<'model-retry'>()} />
       case 'turn-error':
-        return <TurnErrorNodeView {...nodeProps<'turn-error'>()} />
+        return (
+          <TurnErrorNodeView
+            {...nodeProps<'turn-error'>()}
+            renderSlot={renderTurnErrorSlot}
+            SessionProvider={props.SessionProvider}
+          />
+        )
       case 'turn-max-tokens':
         return <TurnMaxTokensNodeView {...nodeProps<'turn-max-tokens'>()} />
       case 'turn-process':
@@ -430,6 +438,9 @@ function makeHarness(
     setTranscriptView: (mode: TranscriptViewMode) => { transcriptView.set(mode) },
     setNodeRenderer: (renderer: React.ComponentProps<typeof ChatNodeSeat>['renderSlot']) => {
       nodeSlotOverride = renderer
+    },
+    setTurnErrorActions: (renderer: React.ComponentProps<typeof TurnErrorNodeView>['renderSlot']) => {
+      renderTurnErrorSlot = renderer
     },
   }
 }
@@ -1222,6 +1233,20 @@ describe('ChatView', () => {
       '本轮运行失败API 密钥无效AUTH',
       '本轮运行失败plugin exploded',
     ])
+  })
+
+  it('renders product actions beside the terminal Turn failure with the durable error owner', () => {
+    const failure = turnError(2, 'AUTH')
+    const h = makeHarness({ nodes: [failure] })
+    const owners: TurnErrorNode[] = []
+    h.setTurnErrorActions(((_key: string, owner: { node: TurnErrorNode }) => {
+      owners.push(owner.node)
+      return <button type="button">修复配置</button>
+    }) as React.ComponentProps<typeof TurnErrorNodeView>['renderSlot'])
+
+    const view = render(<h.ChatView {...h.props} />)
+    expect(view.getByRole('button', { name: '修复配置' })).toBeTruthy()
+    expect(owners).toEqual([failure])
   })
 
   it('renders the max-tokens notice with localized guidance, distinct from turn errors', () => {

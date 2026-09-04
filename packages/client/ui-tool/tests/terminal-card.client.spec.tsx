@@ -19,9 +19,10 @@ import {
 } from '../src/client/tool/models/terminal-card-model.ts'
 import { createChatStore } from '@deepseek-ai/dsh-client-ui-chat/src/client/stores.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
-import { DetailsPanel } from '@deepseek-ai/dsh-client-ui-chat/src/client/details/DetailsPanel.tsx'
 import { BashRow } from '../src/client/tool/toolviews/bash-sample.tsx'
-import { renderToolDetails, toolChatSnapshot, useEmptyTrajectory } from './tool-details-render.client.tsx'
+import {
+  renderToolDetails, ToolWorkbenchFixture as DetailsPanel, toolChatSnapshot, useEmptyTrajectory,
+} from './tool-details-render.client.tsx'
 import { en, zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
 import { zh as chatZh } from '@deepseek-ai/dsh-client-ui-chat/src/client/locale.ts'
 
@@ -660,7 +661,7 @@ describe('DetailsPanel Output section', () => {
     const view = mount(snapshot({
       nodes: [settled({ call: null })],
     }), target)
-    expect(view.getByText('c1')).toBeTruthy()
+    expect(view.getByText('工具')).toBeTruthy()
     expect(view.queryByText('输入')).toBeNull()
     expect(view.getByText('输出')).toBeTruthy()
   })
@@ -678,7 +679,7 @@ describe('DetailsPanel Output section', () => {
 
   it('no selection at all renders the guidance line and the default title', () => {
     const view = mount(snapshot(), null)
-    expect(view.getByText('详情')).toBeTruthy()
+    expect(view.getByText('工具')).toBeTruthy()
     expect(view.getByText('点击消息流中的工具行查看详情')).toBeTruthy()
   })
 

@@ -1,5 +1,7 @@
 /** Browser Chat target plugin. */
 export { apply, inject } from './apply.ts'
+export { ConversationDetailsController } from './details/controller.ts'
+export type { IConversationDetailsController } from './details/controller.ts'
 export type {} from './conversation-nodes/assistant.ts'
 export type {} from './conversation-nodes/command.ts'
 export type {} from './conversation-nodes/compaction.ts'
@@ -34,8 +36,8 @@ export type {
   AssistantActionOwnerProps, ChatFileMentions, ChatNodeOwnerProps, ChatNodeTurnDataInjected,
   ChatNodeViewProps, ChatScrollPosition, ChatStore, ChatViewInjected, ChatViewSlotProps,
   CommandRowOwnerProps, CommandRowProps, DetailsInjected, DetailsSlotProps,
-  DetailsToolOwnerProps, MessageImagesProps,
-  TurnProcessOwnerProps, TurnTailOwnerProps, UseChat, UseChatNodeTurnData,
+  DetailsToolOwnerProps, DetailsViewOwnerProps, DetailsViewTab, MessageImagesProps, ToolDetailsViewProps,
+  TurnErrorActionOwnerProps, TurnProcessOwnerProps, TurnTailOwnerProps, UseChat, UseChatNodeTurnData,
 } from './contract/slots.ts'
 export type {
   TurnProcessSpec,
@@ -51,6 +53,13 @@ export type {
 
 export { isRunningTool, isSettledTool } from './contract/chat-nodes.ts'
 export { EMPTY_CHAT_SNAPSHOT } from './contract/snapshot.ts'
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    /** Controller for the current Session's right-hand Workbench. */
+    conversationDetails: import('./details/controller.ts').IConversationDetailsController
+  }
+}
 
 /** Public merge surface for Chat renderer payloads contributed by other plugins. */
 export interface ChatNodeDataMap {}

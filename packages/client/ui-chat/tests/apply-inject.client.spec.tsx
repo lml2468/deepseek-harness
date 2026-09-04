@@ -152,11 +152,20 @@ describe('Chat inject API', () => {
   it('closes details while sharing selection through the Chat store', async () => {
     const b = await bench()
     const entry = b.runtime.slots.entries('details')[0]!
-    const injected = (entry.inject as unknown as () => DetailsInjected)()
-    expect(Object.keys(injected)).toEqual(['closeDetails'])
+    const store = b.runtime.storeOf('details', ROOT) as ChatInstance
+    const injected = (entry.inject as unknown as (
+      sessionId: SessionId,
+      actions: ChatActions,
+    ) => DetailsInjected)(ROOT, store.actions)
+    expect(Object.keys(injected)).toEqual([
+      'hooks', 'closeDetails', 'completeDetailsFocus', 'selectDetailsView',
+    ])
+    store.actions.openDetailsView('tool', 'call-1')
+    injected.completeDetailsFocus()
+    expect(store.store.getSnapshot().detailsFocus).toBeNull()
     injected.closeDetails()
     expect(b.layout.closeDetails).toHaveBeenCalledOnce()
-    expect(b.runtime.storeOf('details', ROOT)).toBe(b.runtime.storeOf('conversation.view', ROOT))
+    expect(store).toBe(b.runtime.storeOf('conversation.view', ROOT))
     await b.runtime.dispose()
   })
 

@@ -4,8 +4,12 @@ import { SessionSeq } from '@deepseek-ai/dsh-session/types'
 import { isJsonValue, type JsonValue } from '@deepseek-ai/dsh-util-values'
 import type {
   ChatConversationViewNode, ChatSnapshot, ConversationNode, DetailsSlotProps,
-  DetailsToolOwnerProps, RunningToolCall, ToolResultNode,
+  DetailsToolOwnerProps, RunningToolCall, ToolDetailsViewProps, ToolResultNode,
 } from '@deepseek-ai/dsh-client-ui-chat/client'
+import {
+  DetailsPanel as WorkbenchPanel,
+  ToolDetailsView,
+} from '@deepseek-ai/dsh-client-ui-chat/src/client/details/DetailsPanel.tsx'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import { ToolDetails } from '../src/client/tool/ToolDetails.tsx'
 
@@ -22,6 +26,37 @@ const emptyTrajectory: TrajectorySnapshot = {
 
 /** Stable empty Trajectory source for DetailsPanel fixtures. */
 export const useEmptyTrajectory: DetailsSlotProps['useTrajectory'] = selector => selector(emptyTrajectory)
+
+type ToolWorkbenchFixtureProps = Omit<
+  DetailsSlotProps,
+  'useDetailsViews' | 'completeDetailsFocus' | 'selectDetailsView' | 'renderSlot'
+> & Pick<ToolDetailsViewProps, 'renderSlot'>
+
+/** Compose the generic Workbench shell with its built-in Tool View for component tests. */
+export function ToolWorkbenchFixture(props: ToolWorkbenchFixtureProps) {
+  const { renderSlot, __renders, ...panelProps } = props
+  void __renders
+  const useDetailsViews: DetailsSlotProps['useDetailsViews'] = selector => selector([{
+    id: 'tool',
+    label: props.t('details.tool'),
+  }])
+  return (
+    <WorkbenchPanel
+      {...panelProps}
+      useDetailsViews={useDetailsViews}
+      completeDetailsFocus={() => {}}
+      selectDetailsView={() => {}}
+      renderSlot={() => (
+        <ToolDetailsView
+          {...panelProps}
+          renderSlot={renderSlot}
+          focus={null}
+          completeFocus={() => {}}
+        />
+      )}
+    />
+  )
+}
 
 function jsonFixture(value: unknown): JsonValue {
   if (!isJsonValue(value)) throw new Error('tool event fixture must be lossless JSON')

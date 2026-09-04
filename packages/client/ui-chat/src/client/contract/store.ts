@@ -20,5 +20,7 @@ export interface TurnProcessViewEntry {
 /** Per-Session state shared only by the Chat view and details surface. */
 export interface ChatStoreState {
   selection: SelectionTarget | null
+  detailsView: string | null
+  detailsFocus: string | null
   turnProcesses: TurnProcessViewEntry[]
 }

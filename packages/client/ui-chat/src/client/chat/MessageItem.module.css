@@ -269,6 +269,13 @@
   font: var(--dsw-font-markdown-code-block-small);
 }
 
+.turnErrorActions {
+  grid-column: 2 / -1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .maxTokensTitle {
   margin-right: 6px;
   color: var(--dsw-alias-state-warn-primary);
