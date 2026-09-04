@@ -20,14 +20,13 @@
      column without resizing the window): the component publishes the column's
      live width as --dsh-conversation-column-width (px, via ResizeObserver —
      container-type would re-anchor the subtree's portal-free position:fixed
-     descendants) and the clamp keeps a 680px floor (a step under the figma
-     748px — the full-width reading felt wide on every screen), takes 74% of
+     descendants) and the clamp keeps the 748px design floor, takes 74% of
      wider columns, and caps at 920px for line-length
      readability. A dragged user preference (--dsh-chat-user-width, published
      by the width handles) replaces the adaptive term wholesale. */
   --dsh-chat-content-width: var(
     --dsh-chat-user-width,
-    clamp(680px, calc(var(--dsh-conversation-column-width, 0px) * 0.74), 920px)
+    clamp(748px, calc(var(--dsh-conversation-column-width, 0px) * 0.74), 920px)
   );
   --dsh-composer-card-max-width: calc(var(--dsh-chat-content-width) + 32px);
   --dsh-composer-side-clearance: 16px;
@@ -432,7 +431,7 @@
   min-height: 40px;
   padding: 4px 20px 8px;
   border-radius: 0 0 18px 18px;
-  background: var(--dsw-alias-bg-layer-1);
+  background: var(--dsw-alias-interactive-bg-hover-solid);
 }
 
 /* Hero: the composer stays in the session scroll body and begins at the top;

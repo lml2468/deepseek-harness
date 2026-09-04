@@ -15,10 +15,10 @@
 }
 
 .hero {
-  /* No bottom pad in the new-task hero, but the side clearance must survive:
-     the hero wrapper is full-width on narrow viewports, so this padding is
-     the only thing keeping the card off the edges there. */
-  padding: 0 var(--dsh-composer-side-clearance);
+  /* HeroShell already owns the desktop edge clearance. Removing the second
+     inset lets the new-task card use the same W + 32px axis as the docked
+     composer; narrow layouts retain an explicit safety inset below. */
+  padding: 0;
 }
 
 .notice {
@@ -210,7 +210,13 @@
 /* Hero reserves a task-sized writing area; the docked composer collapses to
    the content height. */
 .hero .input {
-  min-height: 84px;
+  min-height: 98px;
+}
+
+@media (max-width: 760px) {
+  .hero {
+    padding: 0 var(--dsh-composer-side-clearance);
+  }
 }
 
 /* Toolbar: attach + Plan + Read-only on the left; model + send on the right

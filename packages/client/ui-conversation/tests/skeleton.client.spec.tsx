@@ -611,7 +611,7 @@ describe('ConversationRoot resident composer', () => {
     const b = mount(sessionSnapshotOf())
     const root = b.view.container.querySelector('[data-phase]') as HTMLElement
     // jsdom offsetWidth is 0 until faked: the observer publishes whatever the
-    // layout reports, and the CSS clamp() floors the axis at 680px either way.
+    // layout reports, and the CSS clamp() floors the axis at 748px either way.
     Object.defineProperty(root, 'offsetWidth', { value: 1200, configurable: true })
     act(() => { fireResize(root) })
     expect(root.style.getPropertyValue('--dsh-conversation-column-width')).toBe('1200px')
@@ -638,7 +638,7 @@ describe('ConversationRoot resident composer', () => {
     Element.prototype.releasePointerCapture = function () { captured.delete(this) }
     Element.prototype.hasPointerCapture = function () { return captured.has(this) }
     try {
-      // Base resolves from the adaptive clamp: min(1600*0.64, 920) = 920.
+      // Base resolves from the adaptive clamp: min(1600*0.74, 920) = 920.
       // Dragging the right handle outward by 25px widens by 2×25 = 50 → 970,
       // inside both bounds (max = 1600 − 176 = 1424 keeps the handles on-column).
       fireEvent.pointerDown(handle, { pointerId: 1, clientX: 800, clientY: 300 })
