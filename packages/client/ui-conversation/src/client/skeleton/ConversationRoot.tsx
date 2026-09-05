@@ -16,7 +16,7 @@ export type ConversationRootProps = ConversationSlotProps
 /** localStorage key for the dragged transcript width preference (px). */
 const WIDTH_PREF_KEY = 'dsh.conversation.contentWidth'
 /** Floor for a dragged content width; matches the layout center-column minimum. */
-const CONTENT_MIN = 640
+const CONTENT_MIN = 668
 /** Column budget the content must leave free: 88px per side keeps the width
  * handles fully placeable (24px inset + 40px strip + 24px safe zone) — a
  * larger dragged width would push its own handles off the column and leave no

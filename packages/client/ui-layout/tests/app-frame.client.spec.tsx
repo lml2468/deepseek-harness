@@ -15,7 +15,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { AppFrame } from '@deepseek-ai/dsh-client-ui-layout/src/client/AppFrame.tsx'
 import type { AppFrameProps } from '@deepseek-ai/dsh-client-ui-layout/src/client/AppFrame.tsx'
-import { SIDEBAR_COLLAPSED, SIDEBAR_DEFAULT } from '@deepseek-ai/dsh-client-ui-layout/src/client/columns.ts'
+import { CENTER_MIN, SIDEBAR_COLLAPSED, SIDEBAR_DEFAULT } from '@deepseek-ai/dsh-client-ui-layout/src/client/columns.ts'
 import { createLayoutStore } from '@deepseek-ai/dsh-client-ui-layout/src/client/stores.ts'
 import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { WorkspaceSnapshot } from '@deepseek-ai/dsh-api-workspace-controller/client'
@@ -254,7 +254,7 @@ describe('AppFrame', () => {
 
   it('sidebar slot receives live concession output as owner props', () => {
     const { slotCalls } = mountFrame()
-    expect(slotCalls.find(c => c.key === 'sidebar')!.props).toEqual({ collapsed: false, width: 264 })
+    expect(slotCalls.find(c => c.key === 'sidebar')!.props).toEqual({ collapsed: false, width: SIDEBAR_DEFAULT })
   })
 
   it('sidebar drag widens through rAF-batched pointer moves', () => {
@@ -273,13 +273,13 @@ describe('AppFrame', () => {
   })
 
   it('drag base is the rendered (concession-clamped) width, not the preference', () => {
-    frameWidth = 1234 // step-2 squeeze: details renders 330 while preference is 360
+    frameWidth = 1234 // step-2 squeeze: details renders to the remaining width.
     const { frame, instance } = mountFrame()
     act(() => { instance.actions.openDetails() })
-    expect(tracks(frame)).toEqual([SIDEBAR_DEFAULT, 330])
+    expect(tracks(frame)).toEqual([SIDEBAR_DEFAULT, frameWidth - SIDEBAR_DEFAULT - CENTER_MIN])
     const handles = frame.querySelectorAll('[class*="handle"]')
     drag(handles[1]!, 920, 930) // shrink by 10 from the rendered width
-    expect(instance.getSnapshot().details).toBe(320)
+    expect(instance.getSnapshot().details).toBe(frameWidth - SIDEBAR_DEFAULT - CENTER_MIN - 10)
   })
 
   it('details column stays mounted at zero width', () => {
@@ -304,7 +304,7 @@ describe('AppFrame', () => {
     act(() => { instance.actions.openDetails() })
     frameWidth = 1234
     act(() => { fireResize?.(); vi.advanceTimersByTime(20) })
-    expect(tracks(frame)).toEqual([SIDEBAR_DEFAULT, 330])
+    expect(tracks(frame)).toEqual([SIDEBAR_DEFAULT, frameWidth - SIDEBAR_DEFAULT - CENTER_MIN])
     frameWidth = 1920
     act(() => { fireResize?.(); vi.advanceTimersByTime(20) })
     expect(tracks(frame)).toEqual([SIDEBAR_DEFAULT, 360])
@@ -431,6 +431,6 @@ describe('AppFrame — unmount with an in-flight resize frame', () => {
     act(() => { instance.actions.openDetails() })
     frameWidth = 1234
     act(() => { fireResize?.(); fireResize?.(); vi.advanceTimersByTime(20) })
-    expect(tracks(frame)).toEqual([SIDEBAR_DEFAULT, 330])
+    expect(tracks(frame)).toEqual([SIDEBAR_DEFAULT, frameWidth - SIDEBAR_DEFAULT - CENTER_MIN])
   })
 })
