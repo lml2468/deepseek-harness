@@ -638,7 +638,7 @@ describe('ConversationRoot resident composer', () => {
     Element.prototype.releasePointerCapture = function () { captured.delete(this) }
     Element.prototype.hasPointerCapture = function () { return captured.has(this) }
     try {
-      // Base resolves from the adaptive clamp: min(1600*0.62, 860) = 860.
+      // Base resolves from the adaptive clamp: min(1600*0.65, 860) = 860.
       // Dragging the right handle outward by 25px widens by 2×25 = 50 → 910,
       // inside both bounds (max = 1600 − 176 = 1424 keeps the handles on-column).
       fireEvent.pointerDown(handle, { pointerId: 1, clientX: 800, clientY: 300 })
