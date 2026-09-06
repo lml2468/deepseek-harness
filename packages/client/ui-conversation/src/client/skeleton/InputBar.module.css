@@ -10,6 +10,13 @@
   padding: 0 var(--dsh-composer-side-clearance) 8px;
 }
 
+/* The active-task composer keeps the same two-row card silhouette as the
+   WorkBuddy task surface and leaves room for ambient product disclosure
+   below the card. The Hero owns its own taller writing area and spacing. */
+.root:not(.hero) {
+  padding-bottom: 18px;
+}
+
 .fileInput {
   display: none;
 }
@@ -212,6 +219,10 @@
    used in an active conversation. */
 .hero .input {
   min-height: 80px;
+}
+
+.root:not(.hero) .input {
+  min-height: 64px;
 }
 
 @media (max-width: 760px) {
