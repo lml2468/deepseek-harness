@@ -34,6 +34,8 @@
 - textbox "Message or run a task... / commands, @ files or sessions"
 - button "Add content":
   - img
+- button "Add attachment":
+  - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash

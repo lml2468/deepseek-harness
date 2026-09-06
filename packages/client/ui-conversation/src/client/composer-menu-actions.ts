@@ -7,9 +7,9 @@ import type { InputState } from './contract/input.ts'
 export interface ComposerActionContext {
   readonly sessionId: SessionId
   readonly input: InputState
-  readonly canAddImages: boolean
+  readonly canAddFiles: boolean
   openInputTrigger(source: string, trigger: '/' | '@'): void
-  selectImages(): void
+  selectFiles(): void
 }
 
 /** One capability entry contributed to the resident Composer `+` menu. */

@@ -18,16 +18,16 @@ export const inject = ['slots', 'locale']
 export function apply(ctx: ClientContext): void {
   const t = ctx.locale.bind('conversation')
   ctx.inject(['composerMenuActions'], scope => scope.effect(() => scope.composerMenuActions.register({
-    id: 'attachment.images',
+    id: 'attachment.files',
     order: 10,
     group: 'attach',
-    label: () => t('image.add'),
+    label: () => t('file.attach'),
     icon: createElement(IconPaperclipOutline16),
     availability: context => ({
       visible: true,
-      ...(context.canAddImages ? {} : { disabledReason: t('image.dropBlocked') }),
+      ...(context.canAddFiles ? {} : { disabledReason: t('attachment.dropBlocked') }),
     }),
-    invoke: (context) => { context.selectImages() },
+    invoke: (context) => { context.selectFiles() },
   }), 'ui-attachment: Composer action'))
   ctx.slots.inject('conversation.input.attachments', () => ctx.slots.register({
     name: 'conversation.input.attachments',
