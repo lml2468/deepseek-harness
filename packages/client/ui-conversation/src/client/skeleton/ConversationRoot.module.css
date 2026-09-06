@@ -389,14 +389,16 @@
 }
 
 .heroWorkspaceRow {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 2px;
   min-width: 0;
-  min-height: 34px;
-  padding: 2px 16px 4px;
-  border-radius: 0 0 18px 18px;
-  background: var(--dsw-alias-interactive-bg-hover-solid);
+  min-height: 32px;
+  margin-top: -1px;
+  padding: 1px 12px 3px;
+  border-radius: 0 0 16px 16px;
+  background: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover-solid) 65%, transparent);
 }
 
 /* Hero: the composer stays in the session scroll body and begins at the top;
