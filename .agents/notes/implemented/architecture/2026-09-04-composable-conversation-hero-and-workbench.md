@@ -18,6 +18,8 @@ The `ComposerMenuActionRegistry` is a root service that orders capability entry 
 
 Terminal Turn failures expose the ordered `conversation.turn.error.actions` slot beside the official error action. Registrants can add recovery entry points without replacing the error renderer or changing retry and stop behavior.
 
+The Session-scoped `conversation.chat.turnHeader` single slot renders once from the Turn process anchor before the Assistant response. It exposes the authoritative `TurnLocation` so a product can present its Agent identity and completion state without replacing Chat nodes or mirroring Session lifecycle data.
+
 The shared theme defines semantic geometry variables for spacing, control height, radius, and content width. Existing primitives consume them where the value is common. `Modal` traps Tab navigation, closes on Escape, preserves an explicit safe autofocus target, and restores its connected opener when it unmounts.
 
 ## Alternatives considered
@@ -32,7 +34,7 @@ The shared theme defines semantic geometry variables for spacing, control height
 
 ## Consequences
 
-- Product plugins can compose the New Session hierarchy and right-hand inspection views without rebuilding or mirroring DSH state.
+- Product plugins can compose the New Session hierarchy, Turn identity header, and right-hand inspection views without rebuilding or mirroring DSH state.
 - Slot registrations and menu entries remain effect-owned and disappear on plugin unload; duplicate action ids and unknown Workbench view ids fail explicitly.
 - The Workbench controller is presentation state only. Durable tool data, Session history, panel geometry, and execution behavior remain with their existing DSH owners.
 - Package tests cover registration order, disabled and failed menu actions, focus restoration, Session-local view state, view removal, modal focus, and default fallback rendering. Assembled browser tests remain responsible for geometry and screenshot evidence.

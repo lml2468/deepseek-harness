@@ -15,6 +15,7 @@ The browser Chat target for Conversation assembly. It registers Chat event defin
 - [Workbench views](#workbench-views)
 - [System prompt row](#system-prompt-row)
 - [Turn token usage](#turn-token-usage)
+- [Turn identity header](#turn-identity-header)
 - [Turn Process Folding](#turn-process-folding)
 - [Scroll ownership](#scroll-ownership)
 - [Model Experience](#model-experience)
@@ -41,6 +42,13 @@ Chat shows a collapsed `System prompt` row for each non-empty initial or resumed
 ## Turn token usage
 
 A completed Turn shows an expandable usage row only when the loaded window includes `turn/start` and every started model attempt reports safe, exact usage. The row omits unavailable optional buckets. Incomplete or contradictory accounting hides the complete disclosure instead of presenting a partial total.
+
+-----
+
+<a id="turn-identity-header"></a>
+## Turn identity header
+
+The Session-scoped `conversation.chat.turnHeader` single slot renders once before a Turn's Assistant response. Its owner exposes the DSH `TurnLocation`, including the authoritative open/closed state and start/end events; product compositions may present their own Agent identity and localized status without replacing Chat nodes or copying Session state. An unoccupied slot renders no header.
 
 -----
 

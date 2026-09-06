@@ -7,7 +7,7 @@ import type {
   AssistantMessageNode, ChatNode, ChatNodeOwnerProps, ChatNodeViewProps, ChatSnapshot,
   ChatViewSlotProps, CommandNode, CompactionSummaryNode, ContextMessageNode, ConversationNode,
   LegacyConversationSlice, ModelRetryNode, RunningToolCall, SelectionTarget, SteeringMessageNode,
-  ToolCallBlock, ToolResultNode, TurnErrorNode, TurnMaxTokensNode, UseChatNodeTurnData,
+  ToolCallBlock, ToolResultNode, TurnErrorNode, TurnHeaderOwnerProps, TurnMaxTokensNode, UseChatNodeTurnData,
   TranscriptViewMode, UserMessageNode,
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type {
@@ -277,6 +277,8 @@ function makeHarness(
     React.ComponentProps<typeof TurnTailNodeView>['renderSlotChain']
   const renderTurnTailSlot = (() => null) as unknown as
     React.ComponentProps<typeof TurnTailNodeView>['renderSlot']
+  let renderTurnHeaderSlot = (() => null) as unknown as
+    React.ComponentProps<typeof TurnProcessNodeView>['renderSlot']
   let renderTurnErrorSlot = (() => null) as unknown as
     React.ComponentProps<typeof TurnErrorNodeView>['renderSlot']
   let nodeSlotOverride: React.ComponentProps<typeof ChatNodeSeat>['renderSlot'] | undefined
@@ -326,7 +328,11 @@ function makeHarness(
       case 'turn-max-tokens':
         return <TurnMaxTokensNodeView {...nodeProps<'turn-max-tokens'>()} />
       case 'turn-process':
-        return <TurnProcessNodeView {...nodeProps<'turn-process'>()} />
+        return <TurnProcessNodeView
+          {...nodeProps<'turn-process'>()}
+          renderSlot={renderTurnHeaderSlot}
+          SessionProvider={props.SessionProvider}
+        />
       case 'system-prompt':
         return <SystemPromptNodeView {...nodeProps<'system-prompt'>()} />
       case 'turn-tail':
@@ -441,6 +447,9 @@ function makeHarness(
     },
     setTurnErrorActions: (renderer: React.ComponentProps<typeof TurnErrorNodeView>['renderSlot']) => {
       renderTurnErrorSlot = renderer
+    },
+    setTurnHeader: (renderer: React.ComponentProps<typeof TurnProcessNodeView>['renderSlot']) => {
+      renderTurnHeaderSlot = renderer
     },
   }
 }
@@ -1353,6 +1362,27 @@ describe('ChatView', () => {
     const renewedToggle = view.getByRole('button', { name: '1 次工具调用 · 1 条消息 · 1 个 subagent' })
     expect(renewedToggle.getAttribute('aria-expanded')).toBe('true')
     expect(members[0]?.getAttribute('hidden')).toBeNull()
+  })
+
+  it('renders one product Turn header from the authoritative Turn location', () => {
+    const h = makeHarness({
+      nodes: [user(1, 'question'), assistant(2, 'final answer', 1, 1)],
+      turnTimings: new Map([[1, { startTime: 1_000, endTime: 5_000 }]]),
+      turnEnds: new Map([[1, 3]]),
+    })
+    const owners: TurnHeaderOwnerProps[] = []
+    h.setTurnHeader(((_key: string, owner: TurnHeaderOwnerProps) => {
+      owners.push(owner)
+      return <div data-testid="turn-header">Agent · {owner.turn.status}</div>
+    }) as React.ComponentProps<typeof TurnProcessNodeView>['renderSlot'])
+
+    const view = render(<h.ChatView {...h.props} />)
+    expect(view.getByTestId('turn-header').textContent).toBe('Agent · closed')
+    expect(view.getByTestId('turn-header').compareDocumentPosition(view.getByText('final answer')))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(owners).toHaveLength(1)
+    expect(owners[0]?.turn.start?.time).toBe(1_000)
+    expect(owners[0]?.turn.end?.time).toBe(5_000)
   })
 
   it('folds injected Context in place with the rest of the Turn process', () => {

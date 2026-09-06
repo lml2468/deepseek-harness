@@ -15,6 +15,7 @@ Conversation 组装的浏览器 Chat target。本包注册 Chat event definition
 - [Workbench 视图](#workbench-views)
 - [系统提示词行](#system-prompt-row)
 - [轮次 token 用量](#turn-token-usage)
+- [Turn 身份头部](#turn-identity-header)
 - [轮次过程折叠](#turn-process-folding)
 - [滚动归属](#scroll-ownership)
 - [模型体验](#model-experience)
@@ -41,6 +42,13 @@ Chat 会为每个非空的初始或恢复请求、显式消息序列起点或真
 ## 轮次 token 用量
 
 只有当已加载窗口包含 `turn/start`，且每次已启动的模型尝试都报告安全、精确的用量时，已完成 Turn 才显示可展开的用量行。该行会省略不可用的可选用量桶。记账不完整或相互矛盾时，整个详情都不显示，避免把部分总量冒充完整结果。
+
+-----
+
+<a id="turn-identity-header"></a>
+## Turn 身份头部
+
+Session 级 `conversation.chat.turnHeader` 单一 slot 在每个 Turn 的 Assistant 回复前渲染一次。其 owner 暴露 DSH `TurnLocation`，包含权威的打开/关闭状态以及开始/结束事件；产品组合可据此呈现自己的 Agent 身份和本地化状态，而无需替换 Chat node 或复制 Session 状态。slot 无注册项时不渲染头部。
 
 -----
 

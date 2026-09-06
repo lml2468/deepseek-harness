@@ -18,6 +18,8 @@ Status: implemented
 
 终止的 Turn 失败在官方错误操作旁暴露有序的 `conversation.turn.error.actions` slot。注册方可以增加恢复入口，而无需替换错误 renderer 或改变重试和停止行为。
 
+Session 级 `conversation.chat.turnHeader` 单一 slot 从 Turn 过程锚点渲染一次，位于 Assistant 回复之前。它暴露权威的 `TurnLocation`，使产品可以呈现自身的 Agent 身份和完成状态，而无需替换 Chat node 或镜像 Session 生命周期数据。
+
 共享 theme 定义间距、控件高度、圆角和内容宽度的语义几何变量。现有 primitive 在数值确实共用时消费这些变量。`Modal` 限制 Tab 焦点、支持 Escape 关闭、保留显式安全自动聚焦目标，并在卸载时把焦点还给仍连接的 opener。
 
 ## Alternatives considered
@@ -32,7 +34,7 @@ Status: implemented
 
 ## Consequences
 
-- 产品插件可以组合新会话层级和右侧检查视图，而无需重建或镜像 DSH 状态。
+- 产品插件可以组合新会话层级、Turn 身份头部和右侧检查视图，而无需重建或镜像 DSH 状态。
 - Slot 注册和菜单条目由 effect 持有，并随插件卸载消失；重复动作 id 和未知 Workbench view id 会明确失败。
 - Workbench controller 只持有呈现状态。持久 Tool 数据、Session 历史、面板几何和执行行为仍由既有 DSH 所有者持有。
 - 包级测试覆盖注册顺序、菜单禁用与失败、焦点恢复、Session 局部 view 状态、view 移除、Modal 焦点和默认 fallback 渲染。组装后的浏览器测试继续负责几何与截图证据。

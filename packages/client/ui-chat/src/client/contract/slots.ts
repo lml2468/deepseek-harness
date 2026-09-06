@@ -38,6 +38,11 @@ export interface TurnTailOwnerProps {
   openFile: (path: string) => void
 }
 
+/** Turn identity and lifecycle exposed to a product-owned Assistant header. */
+export interface TurnHeaderOwnerProps {
+  turn: TurnLocation
+}
+
 /** Owner currency of finalized-assistant actions. */
 export interface AssistantActionOwnerProps {
   messageId: MessageId
@@ -267,6 +272,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      * that entry. With no entries, the standard action row remains unchanged.
      */
     'conversation.chat.assistant-actions': { kind: 'list'; scope: 'session'; owner: AssistantActionOwnerProps }
+    /** Product-owned identity row shown once before one Turn's Assistant response. */
+    'conversation.chat.turnHeader': { kind: 'single'; scope: 'session'; owner: TurnHeaderOwnerProps }
     /** Ordered product actions beside a terminal Turn failure. */
     'conversation.turn.error.actions': { kind: 'list'; scope: 'session'; owner: TurnErrorActionOwnerProps }
     /**
