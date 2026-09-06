@@ -161,6 +161,7 @@
    right pad is 8 here plus .scroll's 4px bar inset. */
 .input {
   box-sizing: border-box;
+  min-height: 48px;
   padding: 4px 8px 0 16px;
   font-family: var(--dsw-font-family);
   font-size: inherit;
@@ -207,10 +208,10 @@
   cursor: pointer;
 }
 
-/* Hero reserves a task-sized writing area; the docked composer collapses to
-   the content height. */
+/* Hero reserves additional writing space above the same substantial composer
+   used in an active conversation. */
 .hero .input {
-  min-height: 70px;
+  min-height: 84px;
 }
 
 @media (max-width: 760px) {

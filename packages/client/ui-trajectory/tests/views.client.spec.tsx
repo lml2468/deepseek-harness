@@ -488,14 +488,19 @@ describe('plugin registration', () => {
   })
 })
 
-describe('tab switching in ConversationRoot', () => {
-  it('renders two tabs, defaults to chat, and switches to the trajectory ledger', async () => {
+function selectConversationView(name: string): void {
+  fireEvent.click(screen.getByRole('button', { name: '切换任务视图' }))
+  fireEvent.click(screen.getByRole('menuitem', { name }))
+}
+
+describe('view switching in ConversationRoot', () => {
+  it('defaults to chat and switches to the trajectory ledger from the view menu', async () => {
     const b = await bench()
     const view = mount(b)
     expect(screen.getByTestId('chat-body')).toBeTruthy()
-    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Chat', 'Trajectory'])
+    expect(screen.queryByRole('tab')).toBeNull()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
+    selectConversationView('Trajectory')
     expect(screen.queryByText(/turns ·/)).toBeNull()
     expect(view.container.querySelectorAll('tr[data-turn-start="true"]')).toHaveLength(2)
     expect(screen.queryByRole('columnheader')).toBeNull()
@@ -508,7 +513,7 @@ describe('tab switching in ConversationRoot', () => {
     expect(screen.getByRole('row', { name: /用户/ })).toBeTruthy()
     expect(screen.queryByTestId('chat-body')).toBeNull()
     expect(b.loadOlder).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('tab', { name: 'Chat' }))
+    selectConversationView('Chat')
     expect(b.loadOlder).not.toHaveBeenCalled()
   })
 
@@ -526,7 +531,7 @@ describe('tab switching in ConversationRoot', () => {
   it('opens a local record inspector and switches payload tabs without opening chat details', async () => {
     const b = await bench()
     mount(b)
-    fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
+    selectConversationView('Trajectory')
 
     fireEvent.keyDown(screen.getByRole('row', { name: /工具/ }), { key: 'Enter' })
     expect(screen.getByRole('complementary', { name: '事件详情' })).toBeTruthy()
@@ -563,7 +568,7 @@ describe('tab switching in ConversationRoot', () => {
     }
     const b = await bench(historySnapshot(nodes, { requests: [compaction] }))
     const view = mount(b)
-    fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
+    selectConversationView('Trajectory')
 
     expect(screen.getByText('轮次之间')).toBeTruthy()
     expect(view.container.textContent).not.toContain('Turn null')
@@ -615,7 +620,7 @@ describe('tab switching in ConversationRoot', () => {
     ]
     const b = await bench(historySnapshot(nodes, { requests: compactions }))
     mount(b)
-    fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
+    selectConversationView('Trajectory')
 
     const firstRequest = screen.getByRole('button', { name: '请求 #2 · 压缩' })
     const secondRequest = screen.getByRole('button', { name: '请求 #4 · 压缩' })
@@ -640,7 +645,7 @@ describe('tab switching in ConversationRoot', () => {
   it('dragging the overview focuses overlapping records without filtering the ledger', async () => {
     const b = await bench()
     mount(b)
-    fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
+    selectConversationView('Trajectory')
     const plot = screen.getByLabelText('时间线概览；水平拖动可聚焦事件')
     vi.spyOn(plot, 'getBoundingClientRect').mockReturnValue({
       x: 0, y: 0, left: 0, top: 0, right: 100, bottom: 72, width: 100, height: 72,
@@ -672,7 +677,7 @@ describe('tab switching in ConversationRoot', () => {
   it('clicking a timeline block clears the range, selects the record, and opens its inspector', async () => {
     const b = await bench()
     const view = mount(b)
-    fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
+    selectConversationView('Trajectory')
     const plot = screen.getByLabelText('时间线概览；水平拖动可聚焦事件')
     vi.spyOn(plot, 'getBoundingClientRect').mockReturnValue({
       x: 0, y: 0, left: 0, top: 0, right: 100, bottom: 72, width: 100, height: 72,
@@ -710,7 +715,7 @@ describe('tab switching in ConversationRoot', () => {
   it('empty window keeps the toolbar and reports no timing data', async () => {
     const b = await bench(historySnapshot([]))
     mount(b)
-    fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
+    selectConversationView('Trajectory')
     expect(screen.getByRole('toolbar', { name: '轨迹工具栏' })).toBeTruthy()
     expect(screen.getByText('无计时数据')).toBeTruthy()
     expect(screen.getByRole<HTMLButtonElement>('button', {

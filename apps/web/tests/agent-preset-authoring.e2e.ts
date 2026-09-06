@@ -192,7 +192,7 @@ describe('web e2e: agent-preset authoring is a host-side copy', () => {
 
     // The section reads the roster when it mounts; hop away and back.
     const dialog = settingsDialog()
-    await dialog.getByRole('button', { name: '通用设置' }).click()
+    await dialog.getByRole('button', { name: '通用' }).click()
     await dialog.getByRole('button', { name: 'Agent 预设' }).click()
     await dialog.getByText('加载失败').first().waitFor({ timeout: 10_000 })
 

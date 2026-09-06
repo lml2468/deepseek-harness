@@ -13,14 +13,12 @@
     - button "Agent presets":
       - img
       - text: Agent presets
+  - heading "General" [level=2]
   - button "Open configuration file"
   - button "Close":
     - img
     - text: Close
-  - text: Permission Choose the default permission mode for new sessions
-  - button "Workspace Write":
-    - text: Workspace Write
-    - img
+  - heading "General" [level=3]
   - text: Language
   - button "English":
     - text: English
@@ -40,7 +38,14 @@
     - img
   - button "Decrease font size":
     - img
-  - text: px Conversation display Controls process content in completed turns
+  - text: px
+  - heading "Permissions" [level=3]
+  - text: Permission Choose the default permission mode for new sessions
+  - button "Workspace Write":
+    - text: Workspace Write
+    - img
+  - heading "Conversation" [level=3]
+  - text: Conversation display Controls process content in completed turns
   - button "Compact":
     - text: Compact
     - img

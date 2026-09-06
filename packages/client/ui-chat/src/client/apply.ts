@@ -1,4 +1,4 @@
-/** Register the Chat Conversation target, renderers, stats, and details surface. */
+/** Register the Chat Conversation target, renderers, and details surface. */
 import type { Context } from '@deepseek-ai/cordis'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
@@ -24,9 +24,8 @@ import { EMPTY_CHAT_SNAPSHOT } from './contract/snapshot.ts'
 import { ApprovalCommand } from './chat/ApprovalCommand.tsx'
 import { ChatView } from './chat/ChatView.tsx'
 import { registerChatNodeRenderers } from './chat/register-node-renderers.ts'
-import { StatsLine } from './chat/StatsLine.tsx'
 import { registerConversationNodes } from './conversation-nodes/register.ts'
-import { DetailsPanel, ToolDetailsView } from './details/DetailsPanel.tsx'
+import { DetailsLauncher, DetailsPanel, ToolDetailsView } from './details/DetailsPanel.tsx'
 import { ConversationDetailsController } from './details/controller.ts'
 import { en, NS, zh } from './locale.ts'
 import { TranscriptViewRow, type TranscriptViewRowInjected } from './settings/TranscriptViewRow.tsx'
@@ -117,7 +116,8 @@ export function apply(ctx: Context): void {
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
     id: 'transcript-view',
-    order: 12,
+    order: 20,
+    label: () => t('settings.group.conversation'),
     locale: NS,
     inject: (): TranscriptViewRowInjected => ({
       hooks: { transcriptView: transcriptView.mode },
@@ -187,11 +187,6 @@ export function apply(ctx: Context): void {
     return disposeView
   })
 
-  ctx.slots.inject('conversation.composer.dock', () =>
-    ctx.slots.register({
-      name: 'conversation.composer.dock', id: 'stats', order: 0, locale: NS,
-    }, StatsLine))
-
   ctx.slots.inject('conversation.approval.detail', () =>
     ctx.slots.register({ name: 'conversation.approval.detail' }, ApprovalCommand))
 
@@ -210,6 +205,21 @@ export function apply(ctx: Context): void {
       }
     },
   }, DetailsPanel))
+
+  ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
+    name: 'conversation.session.header.utilities',
+    id: 'workbench',
+    order: 0,
+    locale: NS,
+    inject: () => ({
+      hooks: { detailsViews },
+      openDetails: () => {
+        const first = detailsViews.getSnapshot().at(0)
+        const viewId = detailsController.activeViewId ?? first?.id
+        if (viewId !== undefined) detailsController.open(viewId)
+      },
+    }),
+  }, DetailsLauncher))
 
   ctx.slots.inject('conversation.details.view', () => ctx.slots.register({
     name: 'conversation.details.view',

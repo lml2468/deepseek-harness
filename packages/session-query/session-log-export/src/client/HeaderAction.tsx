@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { IconDownloadOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconDownloadOutline16, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import { SessionLogDownloadDialog, type SessionLogDownloadDialogProps } from './Dialog.tsx'
 import css from './HeaderAction.module.css'
 
@@ -15,16 +15,18 @@ export function SessionLogDownloadHeaderAction(props: SessionLogDownloadDialogPr
 
   return (
     <>
-      <button
-        type="button"
-        className={css.sessionLogButton}
-        disabled={busy}
-        aria-busy={busy}
-        onClick={() => { void request(sessionId) }}
-      >
-        <span>{t('header.action')}</span>
-        <IconDownloadOutline16 size={12} />
-      </button>
+      <Tooltip label={() => t('header.action')} side="bottom">
+        <button
+          type="button"
+          className={css.sessionLogButton}
+          disabled={busy}
+          aria-busy={busy}
+          aria-label={t('header.action')}
+          onClick={() => { void request(sessionId) }}
+        >
+          <IconDownloadOutline16 size={16} />
+        </button>
+      </Tooltip>
       <SessionLogDownloadDialog {...props} />
     </>
   )

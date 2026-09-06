@@ -95,7 +95,16 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
     && foldable
     && processPresentation.compactAnswer
     && !processOpen
-  const processHidden = controllerInactive || (foldable && processMember && !processOpen)
+  // Compact is the product-facing transcript. Prompt assembly remains fully
+  // inspectable in the Normal transcript and Trajectory, but its System and
+  // Context bookkeeping should not compete with the user's messages in the
+  // default reading flow.
+  const compactMetadata = compactTranscript
+    && (routedNode?.kind === 'system-prompt'
+      || (routedNode?.kind === 'context' && !(processMember && processOpen)))
+  const processHidden = compactMetadata
+    || controllerInactive
+    || (foldable && processMember && !processOpen)
   const revealProcess = useCallback(() => {
     if (processMember) setOpen(true)
   }, [processMember, setOpen])
@@ -132,6 +141,7 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
       data-chat-turn={turn}
       data-turn-process-member={processMember || undefined}
       data-turn-process-hidden={processHidden || undefined}
+      data-compact-metadata={compactMetadata || undefined}
       data-turn-process-answer={compactAnswer || undefined}
     >
       {renderSlot('conversation.chat.node', routedOwner, {

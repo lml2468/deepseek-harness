@@ -2,6 +2,7 @@
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
+  'group.permission': '权限',
   'title': '权限',
   'description': '选择新会话的默认权限模式',
   'loading': '加载中',
@@ -21,6 +22,7 @@ export type PermissionSettingsKey = keyof typeof zh
 
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
+  'group.permission': 'Permissions',
   'title': 'Permission',
   'description': 'Choose the default permission mode for new sessions',
   'loading': 'Loading',

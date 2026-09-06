@@ -56,8 +56,15 @@ function mount({
   const connectionListeners = new Set<() => void>()
   const reconnect = vi.fn()
   const renderSlot = vi.fn(
-    ((key: string, _owner: unknown, opts?: { only?: string }) => {
+    ((key: string, _owner: unknown, opts?: { only?: string; entryKey?: string; fallback?: unknown }) => {
       if (key === 'settings.section') return <div data-testid={`section-${opts?.only ?? 'all'}`} />
+      if (key === 'settings.section.group' && opts?.entryKey === 'models') {
+        return <div data-testid="model-group">Features</div>
+      }
+      if (key === 'settings.section.icon' && opts?.entryKey === 'models') {
+        return <span aria-hidden="true" data-testid="model-icon">M</span>
+      }
+      if (key === 'settings.section.group' || key === 'settings.section.icon') return opts?.fallback
       return SEAT_CONTENT[key]
     }) as SettingsRootComponentProps['renderSlot'],
   )
@@ -244,7 +251,7 @@ describe('SettingsPanel navigation', () => {
     expect(screen.getByTestId('section-general')).toBeTruthy()
   })
 
-  it('gives every section a nav glyph, distinct for the ids the shell knows', () => {
+  it('pairs every section label with a consistent navigation glyph', () => {
     mount({
       rows: [
         { id: 'general', order: 0, label: 'General' },
@@ -255,15 +262,11 @@ describe('SettingsPanel navigation', () => {
       ],
     })
     openPanel()
-    // Glyphs carry no id of their own, so the drawn paths are what tells them apart.
-    const glyphs = ['General', 'Models', 'Agent presets', 'Plugins', 'Contributed']
-      .map(name => screen.getByRole('button', { name }).querySelector('svg')?.innerHTML)
-
-    expect(glyphs.every(glyph => glyph !== undefined && glyph !== '')).toBe(true)
-    // The three ids the shell names get their own glyph; every other section —
-    // including one this package never heard of — shares the gear.
-    expect(new Set(glyphs.slice(0, 4)).size).toBe(4)
-    expect(glyphs[4]).toBe(glyphs[0])
+    for (const name of ['General', 'Models', 'Agent presets', 'Plugins', 'Contributed']) {
+      expect(screen.getByRole('button', { name }).firstElementChild).toBeTruthy()
+    }
+    expect(screen.getByTestId('model-group').textContent).toBe('Features')
+    expect(screen.getByTestId('model-icon').textContent).toBe('M')
   })
 
   it('switches the rendered section on nav click', () => {

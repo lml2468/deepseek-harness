@@ -432,6 +432,7 @@ export function apply(ctx: ClientContext): void {
   ctx.provide('theme', theme)
 
   ctx.effect(() => ctx.locale.register(SETTINGS_NS, { zh, en }), 'ui-theme: settings row dictionaries')
+  const t = ctx.locale.bind(SETTINGS_NS)
 
   const store = createAppearanceRowStore()
   let bound: BoundActions<typeof store> | undefined
@@ -454,7 +455,8 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
     id: 'appearance',
-    order: 10,
+    order: 1,
+    label: () => t('group.general'),
     store,
     locale: SETTINGS_NS,
     inject: injected,
@@ -470,7 +472,8 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
     id: 'font-size',
-    order: 11,
+    order: 2,
+    label: () => t('group.general'),
     store: fontSizeStore,
     locale: SETTINGS_NS,
     inject: fontSizeInjected,

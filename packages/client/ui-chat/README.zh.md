@@ -26,7 +26,7 @@ Conversation 组装的浏览器 Chat target。本包注册 Chat event definition
 <a id="workbench-views"></a>
 ## Workbench 视图
 
-Session 级 `conversation.details.view` 列表可以增加右侧 Workbench 视图而不替换 Chat。`ctx.conversationDetails.open(viewId, focus?)` 为当前已挂载 Session 选择一个已注册视图，并打开由 layout 持有的详情栏；视图接收可选 focus 字符串，并通过 `completeFocus()` 确认消费。内置 `tool` view 持有官方 Tool 详情。活动注册被移除时选择剩余的第一个 view；没有 view 时关闭详情栏。
+Session 级 `conversation.details.view` 列表可以增加右侧 Workbench 视图而不替换 Chat。`ctx.conversationDetails.open(viewId, focus?)` 为当前已挂载 Session 选择一个已注册视图，并打开由 layout 持有的详情栏；视图接收可选 focus 字符串，并通过 `completeFocus()` 确认消费。统一的 header utility 会打开当前活动 view 或首个已注册 view，因此产品 view 不需要重复提供 header action。Workbench header 只显示当前 view，并将其他选项收入同一个选择菜单。内置 `tool` view 持有官方 Tool 详情。活动注册被移除时选择剩余的第一个 view；没有 view 时关闭详情栏。
 
 -----
 
@@ -47,7 +47,7 @@ Chat 会为每个非空的初始或恢复请求、显式消息序列起点或真
 <a id="turn-process-folding"></a>
 ## 轮次过程折叠
 
-「设置 → 通用设置」提供持久化到 `ui-chat` 命名空间的 `Normal` / `Compact` 对话显示偏好，默认使用 `Compact`。Normal 保持所有过程行可见且不渲染轮次过程控件。Compact 模式下，系统提示词在整个轮次中始终独立显示于开场 User 上方。轮次打开期间，上下文注入、推理、Assistant 内容、工具行与重试行始终展开。到 `turn/end` 时，最后一个步骤只有在包含非空文本、图片或未知可见块且不含工具调用块时才成为最终正文边界；边界之前的上下文注入、推理、较早 Assistant 内容、工具行与重试行随后默认收起。控件展示覆盖整个轮次的非 subagent 工具调用数、最终正文之前带回复内容的 Assistant 消息数和 subagent 委派数；值为 0 的分段省略，工具调用与 subagent 两项互斥，系统提示词与上下文注入都不增加计数。三项全为 0 时过程仍会收起，控件标题显示「已思考」（英文为 `Thought for a while`）。摘要下方的通栏分隔线将其与正文或展开后的过程行隔开。用户与 steering 消息、系统提示词、错误、最大 token 与 turn-tail 行留在过程组外；关闭时没有最终正文的轮次保留全部过程证据。新的过程控件插入时不会改变既有行的相对顺序：开场人工输入从首次投影起便位于控件和过程行之前，系统提示词则始终位于该输入上方。只要仍可通过「加载更早」获取历史，过程控件就不出现，也不会隐藏任何成员；历史加载完整后，每个合格的已关闭轮次立即使用默认收起状态。稳定 Chat Node Seat 会让每个 renderer 保持挂载，隐藏成员不产生消息流间距；只有中间没有独立输入时，收起控件才与正文相隔 8px。完成后的收起不依赖是否跟随尾部，因此正在上方阅读的用户可能看到 transcript 高度变化。若自动收起会隐藏当前键盘焦点，则过程组保持展开且焦点留在原处；手动收起会先把焦点移到过程控件，再隐藏成员。会话作用域 store 只记录用户手动展开的「轮次 + 正文步骤」generation；不同正文 generation 默认收起（[折叠决策](../../../.agents/notes/implemented/feature/2026-08-14-web-turn-process-folding.zh.md)，[排序决策](../../../.agents/notes/implemented/bug-fix/2026-08-26-stable-turn-process-order.zh.md)）。
+「设置 → 通用设置」提供持久化到 `ui-chat` 命名空间的 `Normal` / `Compact` 对话显示偏好，默认使用 `Compact`。Normal 保持所有过程行可见且不渲染轮次过程控件。Compact 让 System prompt 与已关闭的 Context 记账信息保持挂载但退出默认阅读流；展开某轮的过程披露会显示其 Context 行，而 System prompt 仍可在 Normal 与 Trajectory 中查看。轮次打开期间，推理、Assistant 内容、工具行与重试行始终展开。到 `turn/end` 时，最后一个步骤只有在包含非空文本、图片或未知可见块且不含工具调用块时才成为最终正文边界；边界之前的上下文注入、推理、较早 Assistant 内容、工具行与重试行随后默认收起。控件展示覆盖整个轮次的非 subagent 工具调用数、最终正文之前带回复内容的 Assistant 消息数和 subagent 委派数；值为 0 的分段省略，工具调用与 subagent 两项互斥，系统提示词与上下文注入都不增加计数。三项全为 0 时过程仍会收起，控件标题显示「已思考」（英文为 `Thought for a while`）。摘要下方的通栏分隔线将其与正文或展开后的过程行隔开。用户与 steering 消息、错误、最大 token 与 turn-tail 行留在过程组外。终止错误首先显示本地化、面向恢复的摘要，其持久化消息与代码保留在默认收起的技术详情中。新的过程控件插入时不会改变既有行的相对顺序：开场人工输入从首次投影起便位于控件和过程行之前。只要仍可通过「加载更早」获取历史，过程控件就不出现；历史加载完整后，每个合格的已关闭轮次立即使用默认收起状态。稳定 Chat Node Seat 会让每个 renderer 保持挂载，隐藏成员不产生消息流间距；只有中间没有独立输入时，收起控件才与正文相隔 8px。完成后的收起不依赖是否跟随尾部，因此正在上方阅读的用户可能看到 transcript 高度变化。手动收起会先把焦点移到过程控件，再隐藏成员。会话作用域 store 只记录用户手动展开的「轮次 + 正文步骤」generation；不同正文 generation 默认收起（[折叠决策](../../../.agents/notes/implemented/feature/2026-08-14-web-turn-process-folding.zh.md)，[排序决策](../../../.agents/notes/implemented/bug-fix/2026-08-26-stable-turn-process-order.zh.md)）。
 
 -----
 

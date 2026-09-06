@@ -1,9 +1,9 @@
 - dialog "设置":
   - navigation:
     - text: 设置
-    - button "通用设置":
+    - button "通用":
       - img
-      - text: 通用设置
+      - text: 通用
     - button "模型":
       - img
       - text: 模型
@@ -13,14 +13,12 @@
     - button "Agent 预设":
       - img
       - text: Agent 预设
+  - heading "通用" [level=2]
   - button "打开配置文件"
   - button "关闭":
     - img
     - text: 关闭
-  - text: 权限 选择新会话的默认权限模式
-  - button "工作区内修改":
-    - text: 工作区内修改
-    - img
+  - heading "常规" [level=3]
   - text: 语言
   - button "中文":
     - text: 中文
@@ -40,7 +38,14 @@
     - img
   - button "减小字号":
     - img
-  - text: px 对话显示 控制已完成轮次的过程内容
+  - text: px
+  - heading "权限" [level=3]
+  - text: 权限 选择新会话的默认权限模式
+  - button "工作区内修改":
+    - text: 工作区内修改
+    - img
+  - heading "对话" [level=3]
+  - text: 对话显示 控制已完成轮次的过程内容
   - button "Compact":
     - text: Compact
     - img

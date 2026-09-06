@@ -120,6 +120,8 @@ root
 │     ├─ settings.header
 │     ├─ settings.action
 │     ├─ settings.close
+│     ├─ settings.section.group
+│     ├─ settings.section.icon
 │     ├─ settings.onboarding
 │     └─ settings.section
 │        ├─ settings.general.item

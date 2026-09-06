@@ -17,6 +17,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import { SessionSeq, type SessionId } from '@deepseek-ai/dsh-session/types'
 import { createChatStore } from '../src/client/stores.ts'
+import type { DetailsLauncherInjected } from '../src/client/contract/slots.ts'
 
 usePinnedBrowserLanguages('zh-CN')
 
@@ -120,6 +121,22 @@ describe('Chat inject API', () => {
     expect(b.layout.openDetails).toHaveBeenCalledOnce()
     expect(b.runtime.storeOf('details', ROOT)).toBe(instance)
     expect(b.runtime.storeOf('conversation.session', ROOT)).not.toBe(instance)
+    await b.runtime.dispose()
+  })
+
+  it('opens the first registered Workbench View from the shared header launcher', async () => {
+    const b = await bench()
+    b.runtime.sessions.open(ROOT)
+    const { instance } = b.chatViewApi(ROOT)
+    const entry = b.runtime.slots.entries('conversation.session.header.utilities')
+      .find(candidate => candidate.options.id === 'workbench')!
+    const injected = (entry.inject as unknown as () => DetailsLauncherInjected)()
+
+    expect(injected.hooks.detailsViews.getSnapshot().map(view => view.id)).toEqual(['tool'])
+    injected.openDetails()
+
+    expect(instance.store.getSnapshot().detailsView).toBe('tool')
+    expect(b.layout.openDetails).toHaveBeenCalledOnce()
     await b.runtime.dispose()
   })
 

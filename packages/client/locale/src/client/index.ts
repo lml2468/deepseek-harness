@@ -547,6 +547,7 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.installLocale(locale)
 
   const store = createLanguageRowStore()
+  const settingsT = locale.bind(SETTINGS_NS)
   let bound: BoundActions<typeof store> | undefined
   const sync = (): void => {
     const snapshot = locale.getSnapshot()
@@ -575,6 +576,7 @@ export function apply(ctx: ClientContext): void {
     name: 'settings.general.item',
     id: 'language',
     order: 0,
+    label: () => settingsT('group.general'),
     store,
     locale: SETTINGS_NS,
     inject: injected,

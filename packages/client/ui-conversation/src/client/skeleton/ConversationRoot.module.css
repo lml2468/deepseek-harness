@@ -36,7 +36,7 @@
 .header {
   position: relative;
   flex: none;
-  padding: 12px 28px 0 20px;
+  padding: 10px 24px 9px 28px;
   border-bottom: 1px solid transparent;
 }
 
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   gap: 0;
-  min-height: 32px;
+  min-height: 36px;
 }
 
 .titleCluster {
@@ -126,13 +126,6 @@
   cursor: default;
 }
 
-.headerActions {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 8px;
-}
-
 .headerUtilities {
   display: flex;
   flex: none;
@@ -141,53 +134,29 @@
   margin-left: 20px;
 }
 
-.headerUtilities:empty {
-  display: none;
-}
-
-/* figma Tab_Group 34:11441: 35px strip, gap 36, pad-left 8, tabs bottom-aligned. */
-.tabs {
+.headerIconButton {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   position: relative;
-  z-index: 1;
-  display: flex;
-  gap: 36px;
-  margin-top: 4px;
-  padding-left: 8px;
-}
-
-/* figma .Tab 34:11442: 13/16 text (figma wt510, rendered 500), gap 8 to the 2px bar. */
-.tab {
-  position: relative;
-  padding: 0 0 11px;
   border: none;
+  border-radius: 8px;
   background: transparent;
-  font-size: 13px;
-  line-height: 16px;
-  font-weight: 500;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-secondary);
   cursor: pointer;
 }
 
-.tab::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 1px;
-  left: 0;
-  height: 2px;
-  border-radius: 2px;
-  background: transparent;
+.headerIconButton:hover,
+.headerIconButton[aria-expanded='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
 }
 
-/* Selected tab is blue, not ink: brand-primary resolves to neutral black in
-   this token sheet, so the selected state rides the business blue — the
-   nearest semantic token that stays blue in both themes. */
-.tabActive {
-  color: var(--dsw-alias-state-business-primary);
-}
-
-.tabActive::after {
-  background: var(--dsw-alias-state-business-primary);
+.headerIconButton:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 1px;
 }
 
 .viewArea {

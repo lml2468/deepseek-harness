@@ -8,7 +8,7 @@ import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
 import { apply as settingsApply, inject as settingsInject } from '@deepseek-ai/dsh-client-ui-settings/client'
 import { apply, inject } from '@deepseek-ai/dsh-client-ui-settings-general/client'
 import { CloseLabel, HeaderContent, TriggerContent } from '../src/client/chrome.tsx'
-import { GeneralSection } from '../src/client/GeneralSection.tsx'
+import { GeneralSection, type GeneralSectionInjected } from '../src/client/GeneralSection.tsx'
 import { SettingsDocumentAction } from '../src/client/SettingsDocumentAction.tsx'
 import type { SettingsDocumentActionInjected } from '../src/client/SettingsDocumentAction.tsx'
 
@@ -65,6 +65,8 @@ function declare(slots: SlotRegistry): () => void {
         'settings.header': { kind: 'single', scope: 'root' },
         'settings.action': { kind: 'list', scope: 'root' },
         'settings.close': { kind: 'single', scope: 'root' },
+        'settings.section.group': { kind: 'keyed', scope: 'root' },
+        'settings.section.icon': { kind: 'keyed', scope: 'root' },
         'settings.section': { kind: 'list', scope: 'root' },
         'settings.onboarding': { kind: 'list', scope: 'root' },
       },
@@ -92,9 +94,11 @@ describe('ui-settings-general apply', () => {
     const entry = generalEntry(before.slots)!
     expect(entry.options).toMatchObject({ id: 'general', order: 0 })
     // The nav label is a locale-following thunk; owners resolve at read time.
-    expect(resolveSlotLabel(entry.options.label)).toBe('通用设置')
+    expect(resolveSlotLabel(entry.options.label)).toBe('通用')
     expect(before.slots.spec('settings.general.item')).toEqual({ kind: 'list', scope: 'root' })
     expect(before.slots.entries('settings.general.item')).toEqual([])
+    const generalInjected = (entry.inject as unknown as () => GeneralSectionInjected)()
+    expect(generalInjected.hooks.items.getSnapshot()).toEqual([])
     // The onboarding hole stays declared for feature-owned steps; this plugin
     // no longer seats one.
     expect(before.slots.entries('settings.onboarding')).toEqual([])
@@ -119,6 +123,37 @@ describe('ui-settings-general apply', () => {
     await vi.waitFor(() => {
       expect(after.slots.spec('settings.general.item')).toEqual({ kind: 'list', scope: 'root' })
     })
+  })
+
+  it('projects ordered, localized General item groups and follows ledger changes', async () => {
+    const b = await bench()
+    declare(b.slots)
+    await b.ctx.plugin({ inject: [...inject], apply }).await()
+    const entry = generalEntry(b.slots)!
+    const general = (entry.inject as unknown as () => GeneralSectionInjected)()
+    const listener = vi.fn()
+    const unsubscribe = general.hooks.items.subscribe(listener)
+    const first = b.slots.register({
+      name: 'settings.general.item', id: 'language', order: 10, label: () => b.locale.getSnapshot().active,
+    }, () => null)
+    const second = b.slots.register({
+      name: 'settings.general.item', id: 'permission', order: 10, label: '权限',
+    }, () => null)
+    expect(general.hooks.items.getSnapshot()).toEqual([
+      { id: 'language', order: 10, group: 'zh' },
+      { id: 'permission', order: 10, group: '权限' },
+    ])
+    b.locale.setLocale('en')
+    expect(general.hooks.items.getSnapshot()).toEqual([
+      { id: 'language', order: 10, group: 'en' },
+      { id: 'permission', order: 10, group: '权限' },
+    ])
+    expect(listener).toHaveBeenCalled()
+    unsubscribe()
+    listener.mockClear()
+    first()
+    second()
+    expect(listener).not.toHaveBeenCalled()
   })
 
   it('registers the zh/en settings dictionaries and frees the seats on teardown', async () => {
@@ -154,7 +189,7 @@ describe('ui-settings-general apply', () => {
     })
     expect(resolveSlotLabel(generalEntry(b.slots)!.options.label)).toBe('General')
     b.locale.setLocale('zh')
-    expect(resolveSlotLabel(generalEntry(b.slots)!.options.label)).toBe('通用设置')
+    expect(resolveSlotLabel(generalEntry(b.slots)!.options.label)).toBe('通用')
   })
 
   it('reads availability from the shared mirror and follows its reconnect refresh', async () => {

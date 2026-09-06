@@ -17,6 +17,13 @@ export const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url))
  */
 export const ZH_BROWSER_LOCALE = 'zh-CN'
 
+/** Select one Session view through the compact header menu. */
+export async function selectTaskView(page: Page, label: string): Promise<void> {
+  const trigger = page.getByRole('button', { name: 'Switch task view', exact: true })
+  await trigger.click()
+  await page.getByRole('menuitem', { name: label, exact: true }).click()
+}
+
 /**
  * Open the standard browser-test page advertising English before client boot.
  * This keeps role locators and goldens deterministic while leaving the Host
@@ -135,7 +142,7 @@ export async function connectFreshWorkspaceZh(page: Page, root: string, name = '
   await pathInput.fill(join(root, name))
   await pathInput.press('Enter')
   await dialog.getByRole('button', { name: '打开', exact: true }).click()
-  await page.locator('[data-composer-input][contenteditable="true"][data-placeholder="描述你想要构建的内容… / 调用指令 @ 文件或对话"]')
+  await page.locator('[data-composer-input][contenteditable="true"]')
     .waitFor({ timeout: 15_000 })
 }
 

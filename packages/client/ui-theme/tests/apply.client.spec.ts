@@ -100,9 +100,9 @@ describe('ui-theme apply', () => {
     before.locale.setLocale('en')
     expect(before.locale.bind(SETTINGS_NS)('appearance.title')).toBe('Appearance')
     const entry = before.slots.entries(SLOT).find(e => e.component === AppearanceRow)!
-    expect(entry.options).toMatchObject({ id: 'appearance', order: 10 })
+    expect(entry.options).toMatchObject({ id: 'appearance', order: 1 })
     const fontEntry = before.slots.entries(SLOT).find(e => e.component === FontSizeRow)!
-    expect(fontEntry.options).toMatchObject({ id: 'font-size', order: 11 })
+    expect(fontEntry.options).toMatchObject({ id: 'font-size', order: 2 })
     expect(fontEntry.locale).toBe(SETTINGS_NS)
 
     const after = await bench()

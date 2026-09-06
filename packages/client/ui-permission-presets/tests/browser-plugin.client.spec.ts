@@ -11,6 +11,7 @@
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-ui-renderer/client'
+import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { TestRemote, scriptedSettingsRemote } from '@deepseek-ai/dsh-client-test-runtime'
@@ -94,7 +95,8 @@ describe('ui-permission browser plugin', () => {
     expect(c.name).toBe('permission')
     expect(c.ui.kind).toBe('popupSelect')
     const row = b.permissionRow()!
-    expect(row.options).toEqual({ id: 'permission', order: -20 })
+    expect(row.options).toMatchObject({ id: 'permission', order: 10 })
+    expect(resolveSlotLabel(row.options.label)).toBe('Permissions')
     const injected = row.inject?.() as PermissionRowInjected | undefined
     expect(injected?.hooks.permission).toBeDefined()
     expect(typeof injected?.load).toBe('function')

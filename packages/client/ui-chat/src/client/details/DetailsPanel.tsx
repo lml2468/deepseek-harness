@@ -1,12 +1,38 @@
-import { Fragment } from 'react'
-import { CodeBlock, IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Fragment, useState } from 'react'
+import {
+  CodeBlock, IconChevronDownOutline14, IconCloseOutline16, IconPanelLeftOutline16, Menu, Tooltip,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import { shallowEqual } from '@deepseek-ai/dsh-client-store'
-import type { DetailsSlotProps, ToolDetailsViewProps } from '../contract/slots.ts'
+import type {
+  DetailsLauncherProps, DetailsSlotProps, ToolDetailsViewProps,
+} from '../contract/slots.ts'
 import type { ChatSnapshot, RunningToolCall, ToolCallBlock, ToolResultNode } from '../contract/snapshot.ts'
 import { findToolCall } from './tool-node-reader.ts'
 import css from './DetailsPanel.module.css'
 
 export type DetailsPanelProps = DetailsSlotProps
+
+/**
+ * Opens the current Session's Workbench without exposing View-specific actions in the header.
+ * @param props - Workbench roster, open callback, and localized labels.
+ * @returns the launcher button, or nothing when no Workbench View is registered.
+ */
+export function DetailsLauncher({ useDetailsViews, openDetails, t }: DetailsLauncherProps) {
+  const views = useDetailsViews(value => value)
+  if (views.length === 0) return null
+  return (
+    <Tooltip label={() => t('details.open')} side="bottom">
+      <button
+        type="button"
+        className={css.launcher}
+        aria-label={t('details.open')}
+        onClick={openDetails}
+      >
+        <IconPanelLeftOutline16 size={16} />
+      </button>
+    </Tooltip>
+  )
+}
 
 /** The snapshot-owned block reference must remain stable across unrelated frames. */
 interface CallMaterial {
@@ -52,10 +78,38 @@ export function DetailsPanel({
   const selected = useStore(s => s.detailsView)
   const focus = useStore(s => s.detailsFocus)
   const active = views.find(view => view.id === selected) ?? views.at(0)
+  const [menuOpen, setMenuOpen] = useState(false)
   return (
     <div className={css.root}>
       <div className={css.header}>
-        <div className={css.title}>{active?.label ?? t('details.title')}</div>
+        {views.length > 1
+          ? (
+            <Menu
+              open={menuOpen}
+              onClose={() => { setMenuOpen(false) }}
+              items={views.map(view => ({ id: view.id, label: view.label }))}
+              selectedId={active?.id}
+              onSelect={(viewId) => {
+                setMenuOpen(false)
+                selectDetailsView(viewId)
+              }}
+              compact
+              portal
+              anchor={(
+                <button
+                  type="button"
+                  className={css.viewSelector}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  onClick={() => { setMenuOpen(open => !open) }}
+                >
+                  <span>{active?.label ?? t('details.title')}</span>
+                  <IconChevronDownOutline14 size={14} />
+                </button>
+              )}
+            />
+          )
+          : <div className={css.title}>{active?.label ?? t('details.title')}</div>}
         <button
           type="button" className={css.close} aria-label={t('details.close')}
           onClick={() => { closeDetails() }}
@@ -63,22 +117,6 @@ export function DetailsPanel({
           <IconCloseOutline16 size={14} />
         </button>
       </div>
-      {views.length > 1 && (
-        <div className={css.tabs} role="tablist">
-          {views.map(view => (
-            <button
-              key={view.id}
-              type="button"
-              role="tab"
-              aria-selected={view.id === active?.id}
-              className={css.tab}
-              onClick={() => { selectDetailsView(view.id) }}
-            >
-              {view.label}
-            </button>
-          ))}
-        </div>
-      )}
       <div className={css.body}>
         {active === undefined
           ? <div className={css.empty}>{t('details.empty')}</div>

@@ -1226,13 +1226,23 @@ describe('ChatView', () => {
   })
 
   it('renders terminal turn failures inline with their durable message and optional code', () => {
-    const h = makeHarness({ nodes: [user(1, 'try'), turnError(2, 'AUTH'), turnError(3)] })
+    const h = makeHarness({ nodes: [
+      user(1, 'try'),
+      turnError(2, 'AUTH'),
+      turnError(3, 'MISSING_CREDENTIAL'),
+      turnError(4),
+    ] })
     const view = render(<h.ChatView {...h.props} />)
     const statuses = view.getAllByRole('status')
-    expect(statuses.map(status => status.textContent)).toEqual([
-      '本轮运行失败API 密钥无效AUTH',
-      '本轮运行失败plugin exploded',
-    ])
+    expect(statuses).toHaveLength(3)
+    expect(statuses[0]?.textContent).toContain('本轮运行失败API 密钥无效')
+    expect(statuses[1]?.textContent).toContain('本轮运行失败缺少运行所需的凭据，请前往设置完成配置后重试。')
+    expect(statuses[2]?.textContent).toContain('本轮运行失败任务未能完成，请检查配置后重试。')
+    const details = view.getAllByText('查看技术详情')
+    expect(details).toHaveLength(3)
+    expect(details[0]?.parentElement?.textContent).toContain('AUTH')
+    expect(details[1]?.parentElement?.textContent).toContain('MISSING_CREDENTIAL')
+    expect(details[2]?.parentElement?.textContent).toContain('plugin exploded')
   })
 
   it('renders product actions beside the terminal Turn failure with the durable error owner', () => {
@@ -1368,7 +1378,7 @@ describe('ChatView', () => {
     expect(members.map(member => member.getAttribute('hidden'))).toEqual([null, null, null])
   })
 
-  it('keeps the first System prompt above User and outside Process through completion and expansion', () => {
+  it('keeps prompt metadata mounted but hidden in Compact while preserving Process behavior', () => {
     const builder = new ChatSnapshotBuilder()
     const initial = withSystemPrompt(chatSnapshotFixture({
       nodes: [userInTurn(2, 'question', 1), context(3, 'runtime policy', 1)],
@@ -1378,7 +1388,8 @@ describe('ChatView', () => {
     const promptRow = view.container.querySelector<HTMLElement>('[data-chat-flow-kind="system-prompt"]')!
 
     expect(renderedFlowKinds(view.container)).toEqual(['system-prompt', 'user', 'context'])
-    expect(promptRow.getAttribute('hidden')).toBeNull()
+    expect(promptRow.getAttribute('hidden')).toBe('until-found')
+    expect(promptRow.dataset.compactMetadata).toBe('true')
     expect(promptRow.hasAttribute('data-turn-process-member')).toBe(false)
 
     act(() => {
@@ -1397,7 +1408,7 @@ describe('ChatView', () => {
       'system-prompt', 'user', 'turn-process', 'context', 'assistant-step',
     ])
     expect(view.container.querySelector('[data-chat-flow-kind="system-prompt"]')).toBe(promptRow)
-    expect(promptRow.getAttribute('hidden')).toBeNull()
+    expect(promptRow.getAttribute('hidden')).toBe('until-found')
 
     act(() => {
       h.set({
@@ -1419,7 +1430,7 @@ describe('ChatView', () => {
       'system-prompt', 'user', 'turn-process', 'context', 'assistant-step', 'assistant-step', 'turn-tail',
     ])
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
-    expect(promptRow.getAttribute('hidden')).toBeNull()
+    expect(promptRow.getAttribute('hidden')).toBe('until-found')
     expect(promptRow.hasAttribute('data-turn-process-member')).toBe(false)
     expect(members.map(member => member.dataset.chatFlowKind)).toEqual(['context', 'assistant-step'])
     expect(members.map(member => member.getAttribute('hidden'))).toEqual(['until-found', 'until-found'])
@@ -1428,7 +1439,7 @@ describe('ChatView', () => {
     expect(renderedFlowKinds(view.container)).toEqual([
       'system-prompt', 'user', 'turn-process', 'context', 'assistant-step', 'assistant-step', 'turn-tail',
     ])
-    expect(promptRow.getAttribute('hidden')).toBeNull()
+    expect(promptRow.getAttribute('hidden')).toBe('until-found')
     expect(members.map(member => member.getAttribute('hidden'))).toEqual([null, null])
   })
 
@@ -1595,16 +1606,14 @@ describe('ChatView', () => {
     expect(view.getByLabelText('回到底部')).toBeTruthy()
   })
 
-  it('keeps a focused process row visible when a live Turn completes', () => {
+  it('keeps prompt metadata hidden while a live Turn completes in Compact', () => {
     const h = makeHarness({
       nodes: [user(1, 'question'), context(2, 'runtime policy', 1)],
       running: true,
     })
     const view = render(<h.ChatView {...h.props} />)
-    const contextToggle = view.getByRole('button', { name: '上下文注入' })
     const contextRow = view.container.querySelector<HTMLElement>('[data-chat-flow-kind="context"]')
-    contextToggle.focus()
-    expect(document.activeElement).toBe(contextToggle)
+    expect(contextRow?.getAttribute('hidden')).toBe('until-found')
 
     act(() => { h.set({
       nodes: [
@@ -1616,14 +1625,12 @@ describe('ChatView', () => {
       turnEnds: new Map([[1, 4]]),
     }) })
     const processToggle = turnProcessControl(view.container)!
-    expect(processToggle.getAttribute('aria-expanded')).toBe('true')
-    expect(contextRow?.getAttribute('hidden')).toBeNull()
-    expect(document.activeElement).toBe(contextToggle)
-
-    fireEvent.click(processToggle)
-    expect(document.activeElement).toBe(processToggle)
     expect(processToggle.getAttribute('aria-expanded')).toBe('false')
     expect(contextRow?.getAttribute('hidden')).toBe('until-found')
+
+    fireEvent.click(processToggle)
+    expect(processToggle.getAttribute('aria-expanded')).toBe('true')
+    expect(contextRow?.getAttribute('hidden')).toBeNull()
   })
 
   it('keeps a foldable closed Turn fully visible while history is partial', () => {
@@ -1641,7 +1648,7 @@ describe('ChatView', () => {
     const contextRow = view.container.querySelector<HTMLElement>('[data-chat-flow-kind="context"]')
 
     expect(turnProcessControl(view.container)).toBeNull()
-    expect(contextRow?.getAttribute('hidden')).toBeNull()
+    expect(contextRow?.getAttribute('hidden')).toBe('until-found')
     expect(contextRow?.hasAttribute('data-turn-process-member')).toBe(false)
 
     act(() => { h.set({ hasMore: false }) })

@@ -41,6 +41,17 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      */
     'settings.close': { kind: 'single'; scope: 'root'; owner: SettingsHeaderOwnerProps }
     /**
+     * Optional group heading rendered immediately before one settings section
+     * navigation row. The keyed entry uses that section's id.
+     */
+    'settings.section.group': { kind: 'keyed'; scope: 'root'; owner: SettingsSectionGroupOwnerProps }
+    /**
+     * Optional semantic icon for one settings section navigation row. The
+     * keyed entry uses that section's id; the shell supplies a neutral icon
+     * when no contribution exists.
+     */
+    'settings.section.icon': { kind: 'keyed'; scope: 'root'; owner: SettingsSectionIconOwnerProps }
+    /**
      * One settings page per list entry. Registrant options carry the nav
      * identity: `id` (section key, drives `only` filtering), `order` (nav
      * position), `label` (registrant-localized display text — the registrant
@@ -111,6 +122,20 @@ export interface SettingsTriggerOwnerProps {
 export interface SettingsHeaderOwnerProps {
   /** Marker field: header owner props are intentionally empty. */
   children?: never
+}
+
+/** Presentation props for a section group heading contribution. */
+export interface SettingsSectionGroupOwnerProps {
+  /** Shell-owned typography and spacing class. */
+  className: string
+}
+
+/** Presentation props for a section navigation icon contribution. */
+export interface SettingsSectionIconOwnerProps {
+  /** Shell-owned color and selection-state class. */
+  className: string
+  /** Icon size in CSS pixels. */
+  size: number
 }
 
 /**

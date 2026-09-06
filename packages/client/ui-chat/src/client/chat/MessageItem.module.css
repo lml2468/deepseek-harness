@@ -237,10 +237,12 @@
 
 .turnErrorRow {
   display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) auto;
+  grid-template-columns: 10px minmax(0, 1fr);
   gap: 8px;
   align-items: start;
-  padding: 2px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--dsw-alias-state-error-tertiary);
   font-size: var(--dsh-content-font-size-secondary, 13px);
   line-height: calc(20px + var(--dsh-content-font-delta-secondary, 0px));
 }
@@ -264,7 +266,28 @@
   color: var(--dsw-alias-label-secondary);
 }
 
-.turnErrorCode {
+.turnErrorDetails {
+  margin-top: 4px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.turnErrorDetails summary {
+  width: fit-content;
+  cursor: pointer;
+  user-select: none;
+}
+
+.turnErrorDiagnostic {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-base);
+  overflow-wrap: anywhere;
+}
+
+.turnErrorDiagnostic code {
   color: var(--dsw-alias-label-tertiary);
   font: var(--dsw-font-markdown-code-block-small);
 }

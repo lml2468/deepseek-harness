@@ -189,6 +189,18 @@ export interface DetailsInjected {
   selectDetailsView: (viewId: string) => void
 }
 
+/** Callbacks and live View roster for the Conversation Workbench launcher. */
+export interface DetailsLauncherInjected {
+  hooks: { detailsViews: SnapshotStore<readonly DetailsViewTab[]> }
+  openDetails: () => void
+}
+
+/** Full props of the Conversation Workbench launcher. */
+export type DetailsLauncherProps =
+  PropsRuntime<'conversation.session.header.utilities'>
+  & InjectFace<DetailsLauncherInjected>
+  & PropsLocale<'chat'>
+
 /** Full details-panel props. */
 export type DetailsSlotProps =
   PropsRuntime<'details'>

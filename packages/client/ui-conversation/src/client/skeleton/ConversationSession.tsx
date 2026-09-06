@@ -1,8 +1,11 @@
 /** Strict per-session header/body content inserted into the resident conversation layout. */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import type { SessionListState, SessionSummary } from '@deepseek-ai/dsh-api-session-controller/client'
+import {
+  IconClockOutline16, Menu, Tooltip,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type {
   ConversationSessionHeaderSlotProps, ConversationSessionSlotProps,
@@ -60,6 +63,7 @@ export function ConversationSessionHeader({
   sessionId, useSession, useSessions, useConversation, useConversationViews, useStore,
   renderSlot, open, selectView, t,
 }: ConversationSessionHeaderProps) {
+  const [viewMenuOpen, setViewMenuOpen] = useState(false)
   const tabs = useConversationViews(value => value)
   const selectedId = useStore(s => s.view)
   const active = resolveActiveView(tabs, selectedId)
@@ -67,6 +71,7 @@ export function ConversationSessionHeader({
   const session = useSession(s => s)
   const conversation = useConversation(s => s)
   const hideChrome = session.blank && conversationPhase(session, conversation) === 'blank'
+  const viewItems = tabs.map(tab => ({ id: tab.id, label: tab.label }))
 
   return (
     <header
@@ -126,30 +131,40 @@ export function ConversationSessionHeader({
                 })}
                 {ancestry.length === 0 && <span className={css.crumbCurrent}>{sessionId}</span>}
               </nav>
-              <div className={css.headerActions}>
-                {renderSlot('conversation.session.header.actions', {})}
-              </div>
             </div>
             <div className={css.headerUtilities}>
+              {renderSlot('conversation.session.header.actions', {})}
+              {tabs.length > 1 && (
+                <Menu
+                  open={viewMenuOpen}
+                  align="end"
+                  portal
+                  items={viewItems}
+                  selectedId={active?.id}
+                  onSelect={(id) => {
+                    selectView(id)
+                    setViewMenuOpen(false)
+                  }}
+                  onClose={() => { setViewMenuOpen(false) }}
+                  anchor={(
+                    <Tooltip label={t('session.views')} side="bottom" disabled={viewMenuOpen}>
+                      <button
+                        type="button"
+                        className={css.headerIconButton}
+                        aria-label={t('session.views')}
+                        aria-expanded={viewMenuOpen}
+                        aria-haspopup="menu"
+                        onClick={() => { setViewMenuOpen(value => !value) }}
+                      >
+                        <IconClockOutline16 />
+                      </button>
+                    </Tooltip>
+                  )}
+                />
+              )}
               {renderSlot('conversation.session.header.utilities', {})}
             </div>
           </div>
-          {tabs.length > 1 && (
-            <div className={css.tabs} role="tablist">
-              {tabs.map(viewTab => (
-                <button
-                  key={viewTab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={viewTab.id === active?.id}
-                  className={clsx(css.tab, viewTab.id === active?.id && css.tabActive)}
-                  onClick={() => { selectView(viewTab.id) }}
-                >
-                  {viewTab.label}
-                </button>
-              ))}
-            </div>
-          )}
         </>
       )}
     </header>

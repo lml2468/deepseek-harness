@@ -25,7 +25,9 @@ import type {
 } from './shell-contract.ts'
 import { SettingsRoot } from './SettingsRoot.tsx'
 import { CloseLabel, HeaderContent, TriggerContent } from './chrome.tsx'
-import { GeneralSection } from './GeneralSection.tsx'
+import {
+  GeneralSection, type GeneralSectionInjected, type SettingsGeneralItemEntry,
+} from './GeneralSection.tsx'
 import { SettingsDocumentAction } from './SettingsDocumentAction.tsx'
 import type { SettingsDocumentActionInjected } from './SettingsDocumentAction.tsx'
 import { SettingsDocumentStore } from './settings-document-store.ts'
@@ -35,7 +37,7 @@ export type {
   CloseLabelProps, HeaderContentProps, TriggerContentProps,
 } from './chrome.tsx'
 export type {
-  GeneralSectionComponentProps,
+  GeneralSectionComponentProps, GeneralSectionInjected, SettingsGeneralItemEntry,
 } from './GeneralSection.tsx'
 export type { SettingsDocumentActionInjected, SettingsDocumentActionProps } from './SettingsDocumentAction.tsx'
 export type { SettingsDocumentState } from './settings-document-store.ts'
@@ -93,6 +95,40 @@ export function apply(ctx: ClientContext): void {
   let rows: readonly SettingsSectionRow[] = []
   let onboardingVersion = -1
   let onboardingSteps: readonly SettingsOnboardingStep[] = []
+  let generalItemsVersion = -1
+  let generalItemsRevision = -1
+  let generalItems: readonly SettingsGeneralItemEntry[] = []
+  const generalInjected = (): GeneralSectionInjected => ({
+    hooks: {
+      items: {
+        getSnapshot: () => {
+          const version = ctx.slots.getVersion('settings.general.item')
+          const revision = ctx.locale.getSnapshot().revision
+          if (version !== generalItemsVersion || revision !== generalItemsRevision) {
+            generalItemsVersion = version
+            generalItemsRevision = revision
+            generalItems = ctx.slots.entries('settings.general.item')
+              .map(entry => ({
+                /* v8 ignore next -- list-slot registration requires id */
+                id: entry.options.id ?? '',
+                order: entry.options.order ?? 0,
+                group: resolveSlotLabel(entry.options.label) ?? '',
+              }))
+              .sort((left, right) => left.order - right.order)
+          }
+          return generalItems
+        },
+        subscribe: (listener) => {
+          const offLedger = ctx.slots.subscribe('settings.general.item', listener)
+          const offLocale = ctx.locale.subscribe(listener)
+          return () => {
+            offLedger()
+            offLocale()
+          }
+        },
+      },
+    },
+  })
   const shellInjected = (): SettingsRootInjected => ({
     reconnect: () => { connection.reconnect() },
     hooks: {
@@ -151,6 +187,8 @@ export function apply(ctx: ClientContext): void {
       'settings.header': { kind: 'single', scope: 'root' },
       'settings.action': { kind: 'list', scope: 'root' },
       'settings.close': { kind: 'single', scope: 'root' },
+      'settings.section.group': { kind: 'keyed', scope: 'root' },
+      'settings.section.icon': { kind: 'keyed', scope: 'root' },
       'settings.section': { kind: 'list', scope: 'root' },
       'settings.onboarding': { kind: 'list', scope: 'root' },
     },
@@ -178,6 +216,7 @@ export function apply(ctx: ClientContext): void {
     order: 0,
     label: () => t('general.nav'),
     locale: NS,
+    inject: generalInjected,
     children: { 'settings.general.item': { kind: 'list', scope: 'root' } },
   }, GeneralSection))
 }

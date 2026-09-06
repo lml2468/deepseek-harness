@@ -111,7 +111,8 @@ export function apply(ctx: Context): void {
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
     id: 'composer-enter',
-    order: 20,
+    order: 21,
+    label: () => t('settings.group.conversation'),
     locale: NS,
     inject: (): EnterBehaviorRowInjected => ({
       hooks: { busyEnter: submissionPolicy.busyEnter },

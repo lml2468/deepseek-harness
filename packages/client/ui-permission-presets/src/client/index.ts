@@ -120,6 +120,7 @@ export function apply(ctx: ClientContext): void {
     sessions.binding(session.sessionId)?.session
 
   ctx.effect(() => ctx.locale.register('settings.permission', { zh, en }), 'ui-permission: settings row dictionaries')
+  const settingsT = ctx.locale.bind('settings.permission')
 
   // The shared SettingsScope mirror updates after document commits and reconnects.
   const controller = new PermissionPresetSettingsController(
@@ -137,7 +138,8 @@ export function apply(ctx: ClientContext): void {
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
     id: 'permission',
-    order: -20,
+    order: 10,
+    label: () => settingsT('group.permission'),
     locale: 'settings.permission',
     inject: injected,
   }, PermissionRow))

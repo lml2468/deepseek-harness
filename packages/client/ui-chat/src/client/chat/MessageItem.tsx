@@ -49,6 +49,12 @@ function failureMessage(
   return code === 'AUTH' ? t('message.failure.auth') : message
 }
 
+function turnFailureSummary(code: unknown, t: ChatViewSlotProps['t']): string {
+  if (code === 'AUTH') return t('message.failure.auth')
+  if (code === 'MISSING_CREDENTIAL') return t('message.failure.missingCredential')
+  return t('message.failure.generic')
+}
+
 function ModelRetryItem({ node, active, t }: {
   node: ModelRetryNode
   active: boolean
@@ -126,9 +132,15 @@ function TurnErrorItem({ node, t, actions }: {
       <StateDot state="error" className={css.turnErrorDot} />
       <div className={css.turnErrorCopy}>
         <span className={css.turnErrorTitle}>{t('message.turnError')}</span>
-        <span className={css.turnErrorMessage}>{failureMessage(node.message, node.code, t)}</span>
+        <span className={css.turnErrorMessage}>{turnFailureSummary(node.code, t)}</span>
+        <details className={css.turnErrorDetails}>
+          <summary>{t('message.failure.details')}</summary>
+          <div className={css.turnErrorDiagnostic}>
+            <span>{node.message}</span>
+            {node.code !== undefined && <code>{node.code}</code>}
+          </div>
+        </details>
       </div>
-      {node.code !== undefined && <code className={css.turnErrorCode}>{node.code}</code>}
       {actions !== undefined && <div className={css.turnErrorActions}>{actions}</div>}
     </div>
   )

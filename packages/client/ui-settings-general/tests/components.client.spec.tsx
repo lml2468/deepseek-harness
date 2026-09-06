@@ -54,17 +54,34 @@ describe('chrome content', () => {
 describe('GeneralSection', () => {
   function mount() {
     const renderSlot = vi.fn(
-      ((key: string) => <div data-testid={`slot-${key}`} />) as GeneralSectionComponentProps['renderSlot'],
+      ((key: string, _owner: unknown, options?: { only?: string }) => (
+        <div data-testid={`slot-${key}-${options?.only ?? 'all'}`} />
+      )) as GeneralSectionComponentProps['renderSlot'],
     )
-    const props: GeneralSectionComponentProps = { ...kit, renderSlot, close: vi.fn() }
+    const items = [
+      { id: 'language', order: 0, group: 'General' },
+      { id: 'appearance', order: 1, group: 'General' },
+      { id: 'permission', order: 10, group: 'Permissions' },
+      { id: 'custom', order: 30, group: '' },
+    ]
+    const props: GeneralSectionComponentProps = {
+      ...kit,
+      renderSlot,
+      close: vi.fn(),
+      useItems: select => select(items),
+    }
     const view = render(<GeneralSection {...props} />)
     return { view, renderSlot }
   }
 
-  it('renders the item slot as the section body', () => {
+  it('groups ordered item registrations into titled cards and preserves unlabeled contributions', () => {
     const { renderSlot } = mount()
-    expect(renderSlot).toHaveBeenCalledWith('settings.general.item', {})
-    expect(screen.getByTestId('slot-settings.general.item')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'General' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Permissions' })).toBeTruthy()
+    expect(screen.getByTestId('slot-settings.general.item-language')).toBeTruthy()
+    expect(screen.getByTestId('slot-settings.general.item-appearance')).toBeTruthy()
+    expect(screen.getByTestId('slot-settings.general.item-custom')).toBeTruthy()
+    expect(renderSlot).toHaveBeenCalledTimes(4)
   })
 })
 

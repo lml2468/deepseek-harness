@@ -566,8 +566,12 @@ describe('ConversationRoot resident composer', () => {
 
     expect(b.view.getByTestId('view-chat')).toBeTruthy()
     expect(b.view.queryByTestId('view-new-view')).toBeNull()
-    expect(b.view.getByRole('tab', { name: 'Chat' }).getAttribute('aria-selected')).toBe('true')
-    expect(b.view.getByRole('tab', { name: 'New view' }).getAttribute('aria-selected')).toBe('false')
+    expect(b.view.queryByRole('tab')).toBeNull()
+    fireEvent.click(b.view.getByRole('button', { name: '切换任务视图' }))
+    expect(b.view.getByRole('menuitem', { name: 'Chat' })).toBeTruthy()
+    expect(b.view.getByRole('menuitem', { name: 'New view' })).toBeTruthy()
+    fireEvent.click(b.view.getByRole('menuitem', { name: 'New view' }))
+    expect(b.store.store.getSnapshot().view).toBe('new-view')
   })
 
   it('rolls the pending workspace label back when switching fails', async () => {

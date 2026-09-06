@@ -10,7 +10,7 @@
  * sessions-derived empty-Hero fact is active. Visible dialog chrome belongs
  * to the step, so a mounted-but-deciding step paints nothing here.
  */
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
   ConnectionIndicator,
@@ -23,7 +23,7 @@ import css from './SettingsRoot.module.css'
 
 const RECOVERY_CONFIRMATION_MS = 2_000
 
-/** Nav glyph by section id; unknown ids fall back to the settings gear. */
+/** Nav glyph by section id; contributed sections use the neutral settings glyph. */
 function navIcon(id: string) {
   if (id === 'models') return <IconDataOutline16 className={css.navIcon} size={16} />
   if (id === 'agent-presets') return <IconAgentPresetOutline16 className={css.navIcon} size={16} />
@@ -48,6 +48,7 @@ function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelP
   // Entries can unmount underneath the requested id, so the render-time
   // projection falls back to the first row when the id is gone.
   const active = rows.find(r => r.id === activeId)?.id ?? rows[0]?.id
+  const activeRow = rows.find(row => row.id === active)
   const titleId = useId()
 
   useEffect(() => {
@@ -70,21 +71,30 @@ function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelP
           <div className={css.navTitle} id={titleId}>{renderSlot('settings.header', {})}</div>
           <div className={css.navList}>
             {rows.map(row => (
-              <button
-                key={row.id}
-                type="button"
-                className={clsx(css.navCell, row.id === active && css.active)}
-                aria-current={row.id === active ? 'true' : undefined}
-                onClick={() => { onSelect(row.id) }}
-              >
-                {navIcon(row.id)}
-                <span className={css.navLabel}>{row.label}</span>
-              </button>
+              <Fragment key={row.id}>
+                {renderSlot('settings.section.group', { className: css.navGroup ?? '' }, {
+                  entryKey: row.id,
+                  fallback: null,
+                })}
+                <button
+                  type="button"
+                  className={clsx(css.navCell, row.id === active && css.active)}
+                  aria-current={row.id === active ? 'true' : undefined}
+                  onClick={() => { onSelect(row.id) }}
+                >
+                  {renderSlot('settings.section.icon', { className: css.navIcon ?? '', size: 16 }, {
+                    entryKey: row.id,
+                    fallback: navIcon(row.id),
+                  })}
+                  <span className={css.navLabel}>{row.label}</span>
+                </button>
+              </Fragment>
             ))}
           </div>
         </nav>
         <div className={css.content}>
           <div className={css.header}>
+            {active === 'general' && <h2 className={css.contentTitle}>{activeRow?.label}</h2>}
             <div className={css.actions}>{renderSlot('settings.action', {})}</div>
             <button ref={closeButton} type="button" className={css.close} onClick={onClose}>
               <IconCloseOutline16 size={14} />

@@ -11,7 +11,7 @@ import {
   assertFixtureInventory, compareOrRefreshGolden, launchWebScaffold, seedSession, watchConsole,
   webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
-import { newEnglishPage, saveFailureShot } from './support.ts'
+import { newEnglishPage, saveFailureShot, selectTaskView } from './support.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('./expected/composer-tab-geometry', import.meta.url))
 /** Records platform-neutral distances between the two tabs' card rectangles. */
@@ -128,7 +128,7 @@ function measureTab(page: Page): Promise<TabMetrics> {
  * @param tab - the tab to show.
  */
 async function showTab(page: Page, tab: 'Chat' | 'Trajectory'): Promise<void> {
-  await page.getByRole('tab', { name: tab, exact: true }).click()
+  await selectTaskView(page, tab)
   if (tab === 'Trajectory') await page.getByLabel('Trajectory timeline').waitFor({ timeout: 30_000 })
   else await page.locator('[data-conversation-scroll] [data-chat-anchor-key]:visible').first().waitFor({ timeout: 30_000 })
   // Both measurements are taken after a paint, so a rectangle read mid-transition
@@ -251,7 +251,7 @@ describe('web e2e: input card position across view tabs', () => {
     await page.goto(scaffold.authenticatedUrl, { waitUntil: 'load' })
     await page.waitForSelector('[class*="frame"]', { timeout: 30_000 })
     await openSeededSession(page)
-    await page.getByRole('tab', { name: 'Chat', exact: true }).waitFor({ timeout: 30_000 })
+    await page.locator('[data-conversation-scroll]').waitFor({ timeout: 30_000 })
     await page.getByText(FIXTURE.markers.assistant(FIXTURE.turns), { exact: false }).last()
       .waitFor({ timeout: 30_000 })
   }, 180_000)

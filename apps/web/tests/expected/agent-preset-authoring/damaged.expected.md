@@ -1,9 +1,9 @@
 - dialog "设置":
   - navigation:
     - text: 设置
-    - button "通用设置":
+    - button "通用":
       - img
-      - text: 通用设置
+      - text: 通用
     - button "模型":
       - img
       - text: 模型
