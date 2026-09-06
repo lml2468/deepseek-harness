@@ -15,8 +15,8 @@ export type ConversationRootProps = ConversationSlotProps
 
 /** localStorage key for the dragged transcript width preference (px). */
 const WIDTH_PREF_KEY = 'dsh.conversation.contentWidth'
-/** Floor for a dragged content width; matches the layout center-column minimum. */
-const CONTENT_MIN = 668
+/** Floor for the task-first content column and dragged width preference. */
+const CONTENT_MIN = 736
 /** Column budget the content must leave free: 88px per side keeps the width
  * handles fully placeable (24px inset + 40px strip + 24px safe zone) — a
  * larger dragged width would push its own handles off the column and leave no
@@ -40,7 +40,7 @@ function readWidthPreference(): number | null {
 function resolveContentWidth(columnWidth: number, preference: number | null): number {
   const max = Math.max(CONTENT_MIN, columnWidth - CONTENT_EDGE_BUDGET)
   if (preference !== null) return Math.min(Math.max(preference, CONTENT_MIN), max)
-  return Math.max(CONTENT_MIN, Math.min(columnWidth * 0.65, 860))
+  return Math.max(CONTENT_MIN, Math.min(columnWidth * 0.62, 768))
 }
 
 /** One transcript width handle: pointer capture + rAF-throttled symmetric

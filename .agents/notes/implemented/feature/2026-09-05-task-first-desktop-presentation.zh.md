@@ -12,7 +12,7 @@ Status: implemented
 
 Compact 对话模式保持 System 与已关闭 Context 行挂载，但将其移出默认阅读流。展开某轮的过程披露会显示其 Context 行；Normal 与 Trajectory 继续提供完整 prompt 元数据的检查入口。
 
-常驻 composer 在活跃 Conversation 中也保留适合任务输入的书写区域，Hero 形态则继续使用更大的区域。Lexical 编辑器、草稿、Queue、审批与提交的所有权均保持不变；改变的只有呈现最小高度。
+常驻 composer 在活跃 Conversation 中也保留适合任务输入的书写区域，Hero 形态则继续使用更大的区域。空白任务布局在常见桌面内容列中保持稳定、易读的输入宽度，减少未使用的草稿高度，并允许高窗口使用更多垂直空间，而不是把完整 Hero 固定在顶部。Lexical 编辑器、草稿、Queue、审批与提交的所有权均保持不变；改变的只有呈现几何。
 
 终止 Turn 错误首先显示本地化、面向恢复的摘要。其持久化 provider 消息与错误代码保留在默认收起的技术详情披露中，已注册的产品操作仍使用消息下方原有的 slot。
 
@@ -30,4 +30,4 @@ Conversation header 使用单行紧凑结构。其他 Conversation View 收入�
 
 ## Consequences
 
-交付的默认界面优先形成连续的任务阅读流，同时保留原有 Runtime 与状态所有权。Compact 模式有意比 Normal 与 Trajectory 少展示诊断信息。活跃 composer 占用更多垂直空间；检查终止错误的原始 provider 文本需要一次展开操作；Conversation header 减少实现层控制；Settings 页面使用分组卡片与一致的导航图标。CSS 与组件测试固定这些呈现选择；产品仍只能通过公共 slot 组合品牌与领域内容。
+交付的默认界面优先形成连续的任务阅读流，同时保留原有 Runtime 与状态所有权。Compact 模式有意比 Normal 与 Trajectory 少展示诊断信息。活跃 composer 占用更多垂直空间；空白任务 composer 优先保持稳定的书写宽度，而不是只按百分比缩放；检查终止错误的原始 provider 文本需要一次展开操作；Conversation header 减少实现层控制；Settings 页面使用分组卡片与一致的导航图标。CSS 与组件测试固定这些呈现选择；产品仍只能通过公共 slot 组合品牌与领域内容。

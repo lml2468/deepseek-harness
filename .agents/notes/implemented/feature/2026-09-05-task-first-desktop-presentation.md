@@ -12,7 +12,7 @@ The default Web UI exposed runtime bookkeeping with the same visual weight as us
 
 Compact transcript mode keeps System and closed Context rows mounted but removes them from the default reading flow. Expanding a Turn's process disclosure reveals its Context rows; Normal and Trajectory remain the inspection surfaces for complete prompt metadata.
 
-The resident composer reserves a task-sized writing area in active Conversations as well as the larger Hero variant. It keeps the same Lexical editor, draft, Queue, approval, and submission ownership; only the presentation minimum changes.
+The resident composer reserves a task-sized writing area in active Conversations as well as the larger Hero variant. The blank-Task layout keeps a stable, readable input width across common desktop columns, reduces unused draft height, and may use additional vertical room on tall windows instead of pinning the complete Hero to the top. It keeps the same Lexical editor, draft, Queue, approval, and submission ownership; only presentation geometry changes.
 
 Terminal Turn errors lead with a localized recovery-oriented summary. Their durable provider message and error code remain available in a collapsed technical-details disclosure, and registered product actions retain their existing seat below the message.
 
@@ -30,4 +30,4 @@ The Conversation header uses one compact row. Alternate Conversation Views move 
 
 ## Consequences
 
-The shipped defaults favor a continuous task-reading flow while preserving the same runtime and state owners. Compact mode is intentionally less diagnostic than Normal and Trajectory. Active composers occupy more vertical space, terminal errors require one disclosure gesture to inspect raw provider text, the Conversation header exposes fewer implementation controls, and Settings pages use grouped cards and consistent navigation glyphs. CSS and component tests pin these presentation choices; products still compose brand and domain content only through public slots.
+The shipped defaults favor a continuous task-reading flow while preserving the same runtime and state owners. Compact mode is intentionally less diagnostic than Normal and Trajectory. Active composers occupy more vertical space, the blank-Task composer prioritizes a stable writing width over a percentage-only scale, terminal errors require one disclosure gesture to inspect raw provider text, the Conversation header exposes fewer implementation controls, and Settings pages use grouped cards and consistent navigation glyphs. CSS and component tests pin these presentation choices; products still compose brand and domain content only through public slots.
