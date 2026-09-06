@@ -469,6 +469,12 @@ describe('ConversationRoot resident composer', () => {
     // persistence mirror stays bound (ConversationSession mounts chrome-hidden
     // for blank sessions): hero typing reaches the Conversation store.
     const box = b.view.getByRole('textbox')
+    const shell = b.view.container.querySelector('[data-hero-composer-shell]')
+    const card = b.view.container.querySelector('[data-composer-card]')
+    const contextBar = b.view.container.querySelector('[data-hero-context-bar]')
+    expect(shell).not.toBeNull()
+    expect(shell?.contains(card)).toBe(true)
+    expect(shell?.contains(contextBar)).toBe(true)
     expect(host?.contains(box)).toBe(true)
     act(() => { b.wiring.setDraft('draft in hero') })
     expect(b.store.store.getSnapshot().draft).toBe('draft in hero')

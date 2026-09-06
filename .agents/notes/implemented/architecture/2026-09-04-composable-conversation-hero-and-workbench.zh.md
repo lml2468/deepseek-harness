@@ -22,7 +22,7 @@ Session 级 `conversation.chat.turnHeader` 单一 slot 从 Turn 过程锚点渲�
 
 共享 theme 定义间距、控件高度、圆角和内容宽度的语义几何变量。现有 primitive 在数值确实共用时消费这些变量。`Modal` 限制 Tab 焦点、支持 Escape 关闭、保留显式安全自动聚焦目标，并在卸载时把焦点还给仍连接的 opener。
 
-默认 Hero 使用 16px 圆角、轻量面板阴影的输入卡片，以及与卡片相连的 32px 上下文栏。Workspace、preset、permission 和 model 触发器统一使用 8px 圆角矩形。这些数值只定义 DSH 默认呈现；产品 slot 内容仍负责自身控件。
+默认 Hero 使用双层 Composer 表面：20px 圆角的浅灰外层承载上下文栏，16px 圆角的输入卡片带有清晰内边距地置于其中。Workspace、preset、permission 和 model 触发器统一使用 8px 圆角矩形。这些数值只定义 DSH 默认呈现；产品 slot 内容仍负责自身控件。
 
 ## Alternatives considered
 

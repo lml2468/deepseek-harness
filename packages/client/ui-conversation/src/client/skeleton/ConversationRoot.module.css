@@ -394,11 +394,9 @@
   align-items: center;
   gap: 2px;
   min-width: 0;
-  min-height: 32px;
-  margin-top: -1px;
-  padding: 1px 12px 3px;
-  border-radius: 0 0 16px 16px;
-  background: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover-solid) 65%, transparent);
+  min-height: 34px;
+  padding: 0 12px;
+  background: transparent;
 }
 
 /* Hero: the composer stays in the session scroll body and begins at the top;

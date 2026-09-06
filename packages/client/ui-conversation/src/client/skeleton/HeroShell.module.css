@@ -118,6 +118,18 @@
   min-width: 0;
 }
 
+/* The New Task composer is one surface with two layers: a quiet outer shell
+   owns the context row, while the white input card sits inside it with a
+   visible inset. The shell is Hero-only; active conversations keep the
+   existing display:contents path above. */
+.root[data-hero-active] .composerFrame {
+  gap: 2px;
+  padding: 4px;
+  border-radius: 20px;
+  background: var(--dsw-specific-selector);
+  box-shadow: var(--dsw-elevation-panel);
+}
+
 .contextFrame {
   order: 1;
 }

@@ -22,7 +22,7 @@ The Session-scoped `conversation.chat.turnHeader` single slot renders once from 
 
 The shared theme defines semantic geometry variables for spacing, control height, radius, and content width. Existing primitives consume them where the value is common. `Modal` traps Tab navigation, closes on Escape, preserves an explicit safe autofocus target, and restores its connected opener when it unmounts.
 
-The default Hero uses a 16px input-card radius with quiet panel elevation and a 32px context row joined to the card. Workspace, preset, permission, and model triggers use 8px rounded-rectangle geometry. These values define the default DSH presentation; product slot content remains responsible for its own controls.
+The default Hero uses a two-layer composer surface: a quiet gray 20px-radius shell owns the context row, and a 16px-radius input card sits inside it with a visible inset. Workspace, preset, permission, and model triggers use 8px rounded-rectangle geometry. These values define the default DSH presentation; product slot content remains responsible for its own controls.
 
 ## Alternatives considered
 

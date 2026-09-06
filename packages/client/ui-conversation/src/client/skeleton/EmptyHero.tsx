@@ -170,7 +170,7 @@ export function HeroLayout({ header, contextControls, content, composer, footer,
         {header}
         {content}
         <div className={css.body}>
-          <div className={css.composerFrame}>
+          <div className={css.composerFrame} data-hero-composer-shell={active || undefined}>
             <div className={css.contextFrame}>{contextControls}</div>
             {composer}
           </div>
