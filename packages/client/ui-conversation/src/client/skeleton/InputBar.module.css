@@ -14,7 +14,7 @@
    WorkBuddy task surface and leaves room for ambient product disclosure
    below the card. The Hero owns its own taller writing area and spacing. */
 .root:not(.hero) {
-  padding-bottom: 18px;
+  padding-bottom: 10px;
 }
 
 .fileInput {
@@ -23,7 +23,7 @@
 
 .hero {
   /* HeroShell already owns the desktop edge clearance. Removing the second
-     inset lets the new-task card use the same W + 32px axis as the docked
+     inset lets the new-task card use the same width axis as the docked
      composer; narrow layouts retain an explicit safety inset below. */
   padding: 0;
 }
@@ -222,7 +222,7 @@
 }
 
 .root:not(.hero) .input {
-  min-height: 64px;
+  min-height: 72px;
 }
 
 @media (max-width: 760px) {
