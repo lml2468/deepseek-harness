@@ -211,7 +211,7 @@
 /* Hero reserves additional writing space above the same substantial composer
    used in an active conversation. */
 .hero .input {
-  min-height: 64px;
+  min-height: 80px;
 }
 
 @media (max-width: 760px) {

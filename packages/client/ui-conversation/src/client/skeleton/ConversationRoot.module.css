@@ -385,7 +385,7 @@
 .composerHero {
   align-self: center;
   gap: 18px;
-  padding: clamp(146px, 22.8vh, 212px) 0 48px;
+  padding: clamp(132px, 21.2vh, 198px) 0 48px;
   /* Card cap + both clearances: the hero input card lands at exactly the same
      width as the docked composer at every viewport. */
   width: min(calc(var(--dsh-composer-card-max-width) + 2 * var(--dsh-composer-side-clearance)), 100%);
