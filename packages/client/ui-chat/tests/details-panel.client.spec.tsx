@@ -105,10 +105,18 @@ describe('DetailsPanel', () => {
         setData: (type: string, value: string) => { transfer.set(type, value) },
       },
     })
-    fireEvent.drop(view.getByRole('tab', { name: /Overview/u }), {
+    expect(active.getAttribute('data-dragging')).toBe('true')
+    const target = view.getByRole('tab', { name: /Overview/u })
+    fireEvent.dragOver(target, { dataTransfer: {} })
+    expect(target.getAttribute('data-drop-target')).toBe('true')
+    fireEvent.dragLeave(target, { relatedTarget: document.body })
+    expect(target.getAttribute('data-drop-target')).toBeNull()
+    fireEvent.dragOver(target, { dataTransfer: {} })
+    fireEvent.drop(target, {
       dataTransfer: { getData: (type: string) => transfer.get(type) ?? '' },
     })
     expect(view.workbench.moveTab).toHaveBeenCalledWith('file:/one.md', 0)
+    expect(target.getAttribute('data-drop-target')).toBeNull()
   })
 
   it('isolates a failing tab and retries it without disturbing siblings', () => {

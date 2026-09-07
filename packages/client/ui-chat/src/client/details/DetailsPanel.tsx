@@ -96,6 +96,8 @@ export function DetailsPanel({
   const [addOpen, setAddOpen] = useState(false)
   const [tabsOpen, setTabsOpen] = useState(false)
   const [tabsOverflow, setTabsOverflow] = useState(false)
+  const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
+  const [dropTargetTabId, setDropTargetTabId] = useState<string | null>(null)
   const tabsRef = useRef<HTMLDivElement | null>(null)
   const tabRefs = useRef(new Map<string, HTMLDivElement>())
 
@@ -161,6 +163,8 @@ export function DetailsPanel({
   const onDrop = (event: DragEvent<HTMLDivElement>, targetIndex: number) => {
     event.preventDefault()
     const tabId = event.dataTransfer.getData('application/x-dsh-workbench-tab')
+    setDraggingTabId(null)
+    setDropTargetTabId(null)
     if (tabId !== '') workbench.moveTab(tabId, targetIndex)
   }
 
@@ -176,6 +180,8 @@ export function DetailsPanel({
                 else tabRefs.current.set(tab.id, element)
               }}
               className={css.tab}
+              data-dragging={draggingTabId === tab.id || undefined}
+              data-drop-target={dropTargetTabId === tab.id || undefined}
               role="tab"
               tabIndex={tab.id === snapshot.activeTabId ? 0 : -1}
               aria-selected={tab.id === snapshot.activeTabId}
@@ -184,10 +190,24 @@ export function DetailsPanel({
               onClick={() => { workbench.activateTab(tab.id) }}
               onKeyDown={(event) => { onTabKeyDown(event, tab.id) }}
               onDragStart={(event) => {
+                setDraggingTabId(tab.id)
+                setDropTargetTabId(null)
                 event.dataTransfer.effectAllowed = 'move'
                 event.dataTransfer.setData('application/x-dsh-workbench-tab', tab.id)
               }}
-              onDragOver={(event) => { event.preventDefault() }}
+              onDragEnd={() => {
+                setDraggingTabId(null)
+                setDropTargetTabId(null)
+              }}
+              onDragOver={(event) => {
+                event.preventDefault()
+                if (draggingTabId !== tab.id) setDropTargetTabId(tab.id)
+              }}
+              onDragLeave={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                  setDropTargetTabId(current => current === tab.id ? null : current)
+                }
+              }}
               onDrop={(event) => { onDrop(event, index) }}
             >
               <span>{tab.title}</span>
