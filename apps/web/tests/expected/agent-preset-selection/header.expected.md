@@ -6,6 +6,9 @@
     - img
 - img
 - text: Minimal mode
+- button "Switch task view":
+  - img
 - button "Session log":
-  - text: Session log
+  - img
+- button "Open task details":
   - img
