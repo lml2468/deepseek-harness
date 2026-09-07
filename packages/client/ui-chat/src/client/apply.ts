@@ -174,7 +174,13 @@ export function apply(ctx: Context): void {
           },
           openDetails: (target) => {
             actions.select(target)
-            detailsController.openFor(sessionId, 'tool', target.callId)
+            detailsController.openTabFor(sessionId, {
+              id: 'tool',
+              viewId: 'tool',
+              title: t('details.tool'),
+              state: null,
+              closable: true,
+            }, target.callId)
           },
           fileMentions: (owner: TurnTailOwnerProps) => ctx.get('chatFileMentions')?.forClosing(owner),
           openFile: async (path) => {
@@ -247,7 +253,6 @@ export function apply(ctx: Context): void {
     name: 'conversation.details.view',
     id: 'tool',
     order: 0,
-    label: () => t('details.tool'),
     locale: NS,
     children: { 'conversation.details.tool': { kind: 'single', scope: 'session' } },
     store: chatStore,

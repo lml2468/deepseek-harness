@@ -23,7 +23,7 @@ export type DetailsPanelProps = DetailsSlotProps
  */
 export function DetailsLauncher({ useDetailsViews, openDetails, t }: DetailsLauncherProps) {
   const views = useDetailsViews(value => value)
-  if (views.length === 0) return null
+  if (!views.some(view => view.launchable)) return null
   return (
     <Tooltip label={() => t('details.open')} side="bottom">
       <button
