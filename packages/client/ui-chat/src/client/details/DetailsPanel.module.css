@@ -23,7 +23,7 @@
   flex: 1;
   align-items: center;
   gap: 3px;
-  overflow-x: auto;
+  overflow-x: hidden;
   scrollbar-width: none;
 }
 

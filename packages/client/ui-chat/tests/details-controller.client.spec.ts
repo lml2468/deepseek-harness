@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it, vi } from 'vitest'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
@@ -149,5 +151,29 @@ describe('ConversationDetailsController', () => {
       tabs: [{ id: 'tool' }],
       activeTabId: 'tool',
     })
+  })
+
+  it('resets only the attached Session when its persisted Workbench state is corrupt', async () => {
+    localStorage.clear()
+    localStorage.setItem(`dsh.conversation.workbench.v1.${FIRST}`, JSON.stringify({
+      version: 99,
+      tabs: [{ id: 'broken' }],
+      activeTabId: 'broken',
+    }))
+    localStorage.setItem(`dsh.conversation.workbench.v1.${SECOND}`, JSON.stringify({ marker: 'untouched' }))
+    const list = createSnapshotStore<{ current: SessionId | undefined }>({ current: FIRST })
+    const controller = new ConversationDetailsController(
+      { list } as never,
+      { openDetails: vi.fn(), closeDetails: vi.fn() } as never,
+      () => [{ id: 'tool', label: 'Tool', launchable: false }],
+    )
+    const store = createConversationWorkbenchStore().create(FIRST)
+
+    controller.attach(FIRST, store)
+    await Promise.resolve()
+
+    expect(store.getSnapshot()).toEqual({ version: 1, tabs: [], activeTabId: null })
+    expect(JSON.parse(localStorage.getItem(`dsh.conversation.workbench.v1.${SECOND}`)!))
+      .toEqual({ marker: 'untouched' })
   })
 })

@@ -12,11 +12,12 @@ import { zh } from '../src/client/locale.ts'
 afterEach(() => {
   cleanup()
   localStorage.clear()
+  vi.restoreAllMocks()
 })
 
 const t = makeTranslate(zh)
 
-function renderPanel() {
+function renderPanel(renderSlot?: DetailsPanelProps['renderSlot']) {
   const store = createConversationWorkbenchStore().create('panel-test')
   store.actions.openTab({ id: 'overview', viewId: 'overview', title: 'Overview', state: null, closable: true })
   store.actions.openTab({ id: 'file:/one.md', viewId: 'file', title: 'one.md', state: { path: '/one.md' }, closable: true })
@@ -46,26 +47,41 @@ function renderPanel() {
     workbench,
     openDetailsView: vi.fn(),
     closeDetails: vi.fn(),
-    renderSlot: (_key: string, owner: { tab: { id: string } }, options: { only?: string }) => (
+    renderSlot: renderSlot ?? ((_key: string, owner: { tab: { id: string } }, options: { only?: string }) => (
       <div data-testid="active-view">{options.only}:{owner.tab.id}</div>
-    ),
+    )),
     t,
   } as unknown as DetailsPanelProps
   return { ...render(<DetailsPanel {...props} />), store, workbench, props }
 }
 
 describe('DetailsPanel', () => {
-  it('renders a tablist and activates or closes one tab', () => {
+  it('renders a tablist and activates or closes one tab with neighbouring focus', async () => {
     const view = renderPanel()
     expect(view.getByRole('tablist', { name: zh['details.tabs'] })).toBeTruthy()
     expect(view.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Overview', 'one.md'])
     expect(view.getByTestId('active-view').textContent).toBe('file:file:/one.md')
+    expect(view.queryByRole('button', { name: zh['details.allTabs'] })).toBeNull()
 
     fireEvent.click(view.getByRole('tab', { name: /Overview/u }))
     expect(view.workbench.activateTab).toHaveBeenCalledWith('overview')
 
     fireEvent.click(view.getByRole('button', { name: '关闭“one.md”' }))
     expect(view.workbench.closeTab).toHaveBeenCalledWith('file:/one.md')
+    await vi.waitFor(() => {
+      expect(document.activeElement).toBe(view.getByRole('tab', { name: /Overview/u }))
+    })
+  })
+
+  it('shows the all-tabs menu only while the tab strip overflows', async () => {
+    vi.spyOn(Element.prototype, 'scrollWidth', 'get').mockReturnValue(360)
+    vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(160)
+    const view = renderPanel()
+    await vi.waitFor(() => {
+      expect(view.getByRole('button', { name: zh['details.allTabs'] })).toBeTruthy()
+    })
+    fireEvent.click(view.getByRole('button', { name: zh['details.allTabs'] }))
+    expect(view.getAllByRole('menuitem').map(item => item.textContent)).toEqual(['Overview', 'one.md'])
   })
 
   it('opens registered singleton Views from the add menu', () => {
@@ -93,5 +109,22 @@ describe('DetailsPanel', () => {
       dataTransfer: { getData: (type: string) => transfer.get(type) ?? '' },
     })
     expect(view.workbench.moveTab).toHaveBeenCalledWith('file:/one.md', 0)
+  })
+
+  it('isolates a failing tab and retries it without disturbing siblings', () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    let shouldThrow = true
+    function FlakyView() {
+      if (shouldThrow) throw new Error('temporary render failure')
+      return <div>Recovered file view</div>
+    }
+    const view = renderPanel(() => <FlakyView />)
+
+    expect(view.getByRole('alert').textContent).toContain('temporary render failure')
+    shouldThrow = false
+    fireEvent.click(view.getByRole('button', { name: zh['details.retry'] }))
+    expect(view.getByText('Recovered file view')).toBeTruthy()
+    expect(view.store.getSnapshot().tabs.map(tab => tab.id)).toEqual(['overview', 'file:/one.md'])
+    expect(log).toHaveBeenCalled()
   })
 })

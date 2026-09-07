@@ -1,5 +1,5 @@
 import {
-  Component, Fragment, useRef, useState, useSyncExternalStore,
+  Component, Fragment, useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore,
   type DragEvent, type ErrorInfo, type KeyboardEvent, type ReactNode,
 } from 'react'
 import {
@@ -95,7 +95,29 @@ export function DetailsPanel({
   const active = snapshot.tabs.find(tab => tab.id === snapshot.activeTabId)
   const [addOpen, setAddOpen] = useState(false)
   const [tabsOpen, setTabsOpen] = useState(false)
+  const [tabsOverflow, setTabsOverflow] = useState(false)
+  const tabsRef = useRef<HTMLDivElement | null>(null)
   const tabRefs = useRef(new Map<string, HTMLDivElement>())
+
+  const measureTabs = useCallback(() => {
+    const element = tabsRef.current
+    if (element === null) return
+    const next = element.scrollWidth > element.clientWidth + 1
+    setTabsOverflow(current => current === next ? current : next)
+  }, [])
+  useLayoutEffect(() => {
+    const element = tabsRef.current
+    if (element === null || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measureTabs)
+    observer.observe(element)
+    return () => { observer.disconnect() }
+  }, [measureTabs])
+  useLayoutEffect(measureTabs, [measureTabs, snapshot.tabs])
+  useLayoutEffect(() => {
+    if (snapshot.activeTabId === null) return
+    const tab = tabRefs.current.get(snapshot.activeTabId)
+    if (typeof tab?.scrollIntoView === 'function') tab.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [snapshot.activeTabId])
 
   const focusTab = (tabId: string | undefined) => {
     if (tabId === undefined) return
@@ -145,7 +167,7 @@ export function DetailsPanel({
   return (
     <div className={css.root}>
       <div className={css.header}>
-        <div className={css.tabs} role="tablist" aria-label={t('details.tabs')}>
+        <div ref={tabsRef} className={css.tabs} role="tablist" aria-label={t('details.tabs')}>
           {snapshot.tabs.map((tab, index) => (
             <div
               key={tab.id}
@@ -186,7 +208,7 @@ export function DetailsPanel({
           ))}
         </div>
         <div className={css.headerActions}>
-          {snapshot.tabs.length > 1 && (
+          {tabsOverflow && (
             <Menu
               open={tabsOpen}
               onClose={() => { setTabsOpen(false) }}
