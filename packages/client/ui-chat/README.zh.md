@@ -27,7 +27,7 @@ Conversation 组装的浏览器 Chat target。本包注册 Chat event definition
 <a id="workbench-views"></a>
 ## Workbench 视图
 
-Session 级 `conversation.details.view` 列表可以增加右侧 Workbench 视图而不替换 Chat。`ctx.conversationDetails` 可打开 singleton 或由调用方寻址的 resource tab，并可激活、更新、排序和关闭 tab，同时为外部控件暴露一个稳定的可观察 snapshot。持久化的 `dsh.conversation.workbench.v1` store 只包含 tab 身份、View 身份、标题、JSON 展示状态和活动 tab；focus 请求仅存在于当前进程中，每个 Session 使用隔离的 store。关闭栏只会隐藏它而不销毁 tab，关闭最后一个 tab 时也会隐藏栏。tab strip 支持键盘导航、拖动排序、溢出选择，以及用于打开已注册 singleton View 的添加菜单。每个活动 View 都在独立错误边界内渲染，并接收其 tab、focus 请求、状态更新方法、关闭操作和 focus 确认方法。内置 `tool` View 是普通 singleton tab。移除 View 注册会删除该 View 拥有的全部 tab（[决策](../../../.agents/notes/implemented/feature/2026-09-07-session-workbench-tabs.zh.md)）。
+Session 级 `conversation.details.view` 列表可以增加右侧 Workbench 视图而不替换 Chat。`ctx.conversationDetails` 可打开 singleton 或由调用方寻址的 resource tab，并可激活、更新、排序和关闭 tab，同时为外部控件暴露一个稳定的可观察 snapshot。持久化的 `dsh.conversation.workbench.v1` store 只包含 tab 身份、View 身份、标题、JSON 展示状态和活动 tab；focus 请求仅存在于当前进程中，每个 Session 使用隔离的 store。关闭栏只会隐藏它而不销毁 tab，关闭最后一个 tab 时也会隐藏栏。tab strip 支持键盘导航、拖动排序、溢出选择，以及用于打开已注册 singleton View 的添加菜单。未声明 label 的 View 仅用于 resource tab：调用方可通过 `openTab()` 打开，但它不会出现在添加菜单中，也不接受 `open()`。每个活动 View 都在独立错误边界内渲染，并接收其 tab、focus 请求、状态更新方法、关闭操作和 focus 确认方法。内置 `tool` View 是普通 singleton tab。移除 View 注册会删除该 View 拥有的全部 tab（[决策](../../../.agents/notes/implemented/feature/2026-09-07-session-workbench-tabs.zh.md)）。
 
 -----
 

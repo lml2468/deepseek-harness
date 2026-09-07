@@ -81,9 +81,11 @@ export function apply(ctx: Context): void {
     const tabs: DetailsViewTab[] = []
     for (const entry of ctx.slots.entries('conversation.details.view')) {
       if (entry.options.id === undefined) continue
+      const label = resolveSlotLabel(entry.options.label)
       tabs.push({
         id: entry.options.id,
-        label: resolveSlotLabel(entry.options.label) ?? entry.options.id,
+        label: label ?? entry.options.id,
+        launchable: label !== undefined,
       })
     }
     return tabs
@@ -232,7 +234,7 @@ export function apply(ctx: Context): void {
     inject: () => ({
       hooks: { detailsViews },
       openDetails: () => {
-        const first = detailsViews.getSnapshot().at(0)
+        const first = detailsViews.getSnapshot().find(view => view.launchable)
         const snapshot = detailsController.getSnapshot()
         const active = snapshot.tabs.find(tab => tab.id === snapshot.activeTabId)
         if (active !== undefined) detailsController.openTab(active)

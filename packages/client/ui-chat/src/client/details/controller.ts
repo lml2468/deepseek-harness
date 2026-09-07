@@ -158,6 +158,7 @@ export class ConversationDetailsController implements IConversationDetailsContro
 
   open(viewId: string, focus?: string): void {
     const view = this.#view(viewId)
+    if (!view.launchable) throw new Error(`conversation details: View "${viewId}" is resource-only`)
     this.openTab({ id: viewId, viewId, title: view.label, state: null, closable: true }, focus)
   }
 
@@ -183,6 +184,7 @@ export class ConversationDetailsController implements IConversationDetailsContro
   /** Open the singleton View for an already-addressed mounted Session callback. */
   openFor(sessionId: SessionId, viewId: string, focus?: string): void {
     const view = this.#view(viewId)
+    if (!view.launchable) throw new Error(`conversation details: View "${viewId}" is resource-only`)
     this.openTabFor(sessionId, {
       id: viewId,
       viewId,

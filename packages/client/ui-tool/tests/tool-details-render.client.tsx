@@ -39,6 +39,7 @@ export function ToolWorkbenchFixture(props: ToolWorkbenchFixtureProps) {
   const useDetailsViews: DetailsSlotProps['useDetailsViews'] = selector => selector([{
     id: 'tool',
     label: props.t('details.tool'),
+    launchable: true,
   }])
   const tab = { id: 'tool', viewId: 'tool', title: props.t('details.tool'), state: null, closable: true }
   const snapshot = { version: 1 as const, sessionId: props.sessionId, tabs: [tab], activeTabId: 'tool', focus: null }

@@ -134,7 +134,7 @@ describe('Chat inject API', () => {
       .find(candidate => candidate.options.id === 'workbench')!
     const injected = (entry.inject as unknown as () => DetailsLauncherInjected)()
 
-    expect(injected.hooks.detailsViews.getSnapshot().map(view => view.id)).toEqual(['tool'])
+    expect(injected.hooks.detailsViews.getSnapshot()).toEqual([{ id: 'tool', label: '工具', launchable: true }])
     injected.openDetails()
 
     const workbench = b.runtime.storeOf('details', ROOT) as WorkbenchInstance

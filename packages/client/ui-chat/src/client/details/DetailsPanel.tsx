@@ -215,7 +215,7 @@ export function DetailsPanel({
           <Menu
             open={addOpen}
             onClose={() => { setAddOpen(false) }}
-            items={views.map(view => ({ id: view.id, label: view.label }))}
+            items={views.filter(view => view.launchable).map(view => ({ id: view.id, label: view.label }))}
             onSelect={(viewId) => {
               setAddOpen(false)
               openDetailsView(viewId)

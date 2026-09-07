@@ -126,6 +126,8 @@ export interface DetailsToolOwnerProps {
 export interface DetailsViewTab {
   id: string
   label: string
+  /** Whether the View appears in user-facing singleton launchers. */
+  launchable: boolean
 }
 
 /** Owner state addressed to the active Workbench View. */

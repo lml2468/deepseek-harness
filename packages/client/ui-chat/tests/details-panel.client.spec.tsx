@@ -37,8 +37,8 @@ function renderPanel() {
     close: vi.fn(),
   }
   const views = createSnapshotStore([
-    { id: 'overview', label: 'Overview' },
-    { id: 'file', label: 'File' },
+    { id: 'overview', label: 'Overview', launchable: true },
+    { id: 'file', label: 'File', launchable: false },
   ])
   const props = {
     useStore: bindSnapshotSelector(store),
@@ -73,6 +73,7 @@ describe('DetailsPanel', () => {
     fireEvent.click(view.getByRole('button', { name: zh['details.addTab'] }))
     fireEvent.click(view.getByRole('menuitem', { name: 'Overview' }))
     expect(view.props.openDetailsView).toHaveBeenCalledWith('overview')
+    expect(view.queryByRole('menuitem', { name: 'File' })).toBeNull()
   })
 
   it('supports roving keyboard activation and reordering', () => {

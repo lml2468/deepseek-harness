@@ -12,9 +12,9 @@ function fixture() {
   const sessions = { list }
   const layout = { openDetails: vi.fn(), closeDetails: vi.fn() }
   let views = [
-    { id: 'tool', label: 'Tool' },
-    { id: 'results', label: 'Results' },
-    { id: 'file', label: 'File' },
+    { id: 'tool', label: 'Tool', launchable: true },
+    { id: 'results', label: 'Results', launchable: true },
+    { id: 'file', label: 'File', launchable: false },
   ]
   const controller = new ConversationDetailsController(
     sessions as never,
@@ -69,6 +69,7 @@ describe('ConversationDetailsController', () => {
     expect(f.first.getSnapshot().tabs).toHaveLength(1)
 
     expect(() => { f.controller.open('missing') }).toThrow('unknown view')
+    expect(() => { f.controller.open('file') }).toThrow('resource-only')
     expect(() => {
       f.controller.openTab({ id: 'results', viewId: 'tool', title: 'Tool', state: null, closable: true })
     }).toThrow('belongs to View')
@@ -117,7 +118,7 @@ describe('ConversationDetailsController', () => {
     f.controller.open('results')
     f.controller.openFor(SECOND, 'tool', 'call-2')
 
-    f.setViews([{ id: 'tool', label: 'Tool' }])
+    f.setViews([{ id: 'tool', label: 'Tool', launchable: true }])
     f.controller.reconcileViews(['tool'])
     expect(f.first.getSnapshot().tabs).toEqual([])
     expect(f.second.getSnapshot().tabs.map(tab => tab.id)).toEqual(['tool'])
@@ -129,7 +130,7 @@ describe('ConversationDetailsController', () => {
     const controller = new ConversationDetailsController(
       { list } as never,
       { openDetails: vi.fn(), closeDetails: vi.fn() } as never,
-      () => [{ id: 'tool', label: 'Tool' }],
+      () => [{ id: 'tool', label: 'Tool', launchable: true }],
     )
     const store = createConversationWorkbenchStore().create()
     store.actions.openTab({
