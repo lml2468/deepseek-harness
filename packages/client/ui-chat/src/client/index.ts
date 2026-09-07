@@ -1,7 +1,12 @@
 /** Browser Chat target plugin. */
 export { apply, inject } from './apply.ts'
 export { ConversationDetailsController } from './details/controller.ts'
-export type { IConversationDetailsController } from './details/controller.ts'
+export type {
+  ConversationWorkbenchSnapshot, IConversationDetailsController,
+} from './details/controller.ts'
+export type {
+  ConversationWorkbenchState, ConversationWorkbenchTab,
+} from './details/workbench-store.ts'
 export type {} from './conversation-nodes/assistant.ts'
 export type {} from './conversation-nodes/command.ts'
 export type {} from './conversation-nodes/compaction.ts'

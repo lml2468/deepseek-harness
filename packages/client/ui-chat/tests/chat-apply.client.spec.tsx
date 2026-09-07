@@ -112,7 +112,7 @@ describe('Chat apply wiring', () => {
     const conversationStore = storeOf(b.runtime, 'conversation.session')
     const chatStore = storeOf(b.runtime, 'conversation.view')
     expect(storeOf(b.runtime, 'conversation.session.header')).toBe(conversationStore)
-    expect(storeOf(b.runtime, 'details')).toBe(chatStore)
+    expect(storeOf(b.runtime, 'details')).not.toBe(chatStore)
     expect(chatStore).toBeDefined()
     expect(chatStore).not.toBe(conversationStore)
     await b.runtime.dispose()

@@ -75,8 +75,6 @@ describe('Chat selection survives on its store seat', () => {
     expect(reborn).not.toBe(doomed)
     expect(reborn.store.getSnapshot()).toEqual({
       selection: null,
-      detailsView: null,
-      detailsFocus: null,
       turnProcesses: [],
     })
     await b.runtime.dispose()

@@ -6,53 +6,91 @@ import { bindSnapshotSelector, makeTranslate } from '@deepseek-ai/dsh-client-tes
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { DetailsPanelProps } from '../src/client/details/DetailsPanel.tsx'
 import { DetailsPanel } from '../src/client/details/DetailsPanel.tsx'
-import { createChatStore } from '../src/client/stores.ts'
+import { createConversationWorkbenchStore } from '../src/client/details/workbench-store.ts'
 import { zh } from '../src/client/locale.ts'
 
-afterEach(() => { cleanup() })
+afterEach(() => {
+  cleanup()
+  localStorage.clear()
+})
 
 const t = makeTranslate(zh)
 
-function renderPanel(labels: readonly string[], selected?: string) {
-  const chat = createChatStore().create()
-  if (selected !== undefined) chat.actions.openDetailsView(selected)
-  const views = labels.map(label => ({ id: label.toLowerCase(), label }))
-  const selectDetailsView = vi.fn()
+function renderPanel() {
+  const store = createConversationWorkbenchStore().create('panel-test')
+  store.actions.openTab({ id: 'overview', viewId: 'overview', title: 'Overview', state: null, closable: true })
+  store.actions.openTab({ id: 'file:/one.md', viewId: 'file', title: 'one.md', state: { path: '/one.md' }, closable: true })
+  const source = {
+    getSnapshot: () => store.getSnapshot(),
+    subscribe: (listener: () => void) => store.subscribe(listener),
+  }
+  const workbench = {
+    ...source,
+    activeViewId: 'file',
+    open: vi.fn(),
+    openTab: vi.fn(),
+    activateTab: vi.fn((id: string) => { store.actions.activateTab(id) }),
+    updateTab: vi.fn(),
+    moveTab: vi.fn((id: string, index: number) => { store.actions.moveTab(id, index) }),
+    closeTab: vi.fn((id: string) => { store.actions.closeTab(id) }),
+    completeFocus: vi.fn(),
+    close: vi.fn(),
+  }
+  const views = createSnapshotStore([
+    { id: 'overview', label: 'Overview' },
+    { id: 'file', label: 'File' },
+  ])
   const props = {
-    useStore: bindSnapshotSelector(chat),
-    useDetailsViews: bindSnapshotSelector(createSnapshotStore(views)),
-    selectDetailsView,
+    useStore: bindSnapshotSelector(store),
+    useDetailsViews: bindSnapshotSelector(views),
+    workbench,
+    openDetailsView: vi.fn(),
     closeDetails: vi.fn(),
-    completeDetailsFocus: vi.fn(),
-    renderSlot: (_key: string, _owner: unknown, options: { only?: string }) => (
-      <div data-testid="active-view">{options.only}</div>
+    renderSlot: (_key: string, owner: { tab: { id: string } }, options: { only?: string }) => (
+      <div data-testid="active-view">{options.only}:{owner.tab.id}</div>
     ),
     t,
   } as unknown as DetailsPanelProps
-  return { ...render(<DetailsPanel {...props} />), selectDetailsView }
+  return { ...render(<DetailsPanel {...props} />), store, workbench, props }
 }
 
 describe('DetailsPanel', () => {
-  it('offers multiple Workbench Views through one current-view menu', () => {
-    const view = renderPanel(['Overview', 'Artifacts'], 'artifacts')
+  it('renders a tablist and activates or closes one tab', () => {
+    const view = renderPanel()
+    expect(view.getByRole('tablist', { name: zh['details.tabs'] })).toBeTruthy()
+    expect(view.getAllByRole('tab').map(tab => tab.textContent)).toEqual(['Overview', 'one.md'])
+    expect(view.getByTestId('active-view').textContent).toBe('file:file:/one.md')
 
-    const selector = view.getByRole('button', { name: 'Artifacts' })
-    expect(selector.getAttribute('aria-expanded')).toBe('false')
-    expect(view.queryByRole('tablist')).toBeNull()
-    expect(view.getByTestId('active-view').textContent).toBe('artifacts')
+    fireEvent.click(view.getByRole('tab', { name: /Overview/u }))
+    expect(view.workbench.activateTab).toHaveBeenCalledWith('overview')
 
-    fireEvent.click(selector)
-    expect(selector.getAttribute('aria-expanded')).toBe('true')
-    fireEvent.click(view.getByRole('menuitem', { name: 'Overview' }))
-    expect(view.selectDetailsView).toHaveBeenCalledOnce()
-    expect(view.selectDetailsView).toHaveBeenCalledWith('overview')
+    fireEvent.click(view.getByRole('button', { name: '关闭“one.md”' }))
+    expect(view.workbench.closeTab).toHaveBeenCalledWith('file:/one.md')
   })
 
-  it('renders a single View as a non-interactive title', () => {
-    const view = renderPanel(['Tool'])
+  it('opens registered singleton Views from the add menu', () => {
+    const view = renderPanel()
+    fireEvent.click(view.getByRole('button', { name: zh['details.addTab'] }))
+    fireEvent.click(view.getByRole('menuitem', { name: 'Overview' }))
+    expect(view.props.openDetailsView).toHaveBeenCalledWith('overview')
+  })
 
-    expect(view.getByText('Tool')).toBeTruthy()
-    expect(view.queryByRole('button', { name: 'Tool' })).toBeNull()
-    expect(view.queryByRole('menu')).toBeNull()
+  it('supports roving keyboard activation and reordering', () => {
+    const view = renderPanel()
+    const active = view.getByRole('tab', { name: /one.md/u })
+    fireEvent.keyDown(active, { key: 'ArrowLeft' })
+    expect(view.workbench.activateTab).toHaveBeenCalledWith('overview')
+
+    const transfer = new Map<string, string>()
+    fireEvent.dragStart(active, {
+      dataTransfer: {
+        effectAllowed: '',
+        setData: (type: string, value: string) => { transfer.set(type, value) },
+      },
+    })
+    fireEvent.drop(view.getByRole('tab', { name: /Overview/u }), {
+      dataTransfer: { getData: (type: string) => transfer.get(type) ?? '' },
+    })
+    expect(view.workbench.moveTab).toHaveBeenCalledWith('file:/one.md', 0)
   })
 })

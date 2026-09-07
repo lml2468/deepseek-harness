@@ -13,6 +13,10 @@ import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { MarkdownFileMentions } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
 import type { createChatStore } from '../stores.ts'
+import type { IConversationDetailsController } from '../details/controller.ts'
+import type {
+  ConversationWorkbenchTab,
+} from '../details/workbench-store.ts'
 import type { ToolCallId, SelectionTarget } from './store.ts'
 import type { ChatConversationViewNode, ChatNode, ChatNodeKind } from './chat-nodes.ts'
 import type {
@@ -126,7 +130,15 @@ export interface DetailsViewTab {
 
 /** Owner state addressed to the active Workbench View. */
 export interface DetailsViewOwnerProps {
+  /** The active persisted tab instance addressed to this View. */
+  tab: Readonly<ConversationWorkbenchTab>
+  /** True while this instance owns the visible Workbench body. */
+  active: boolean
   focus: string | null
+  /** Replace this tab's JSON presentation state. */
+  updateState(state: ConversationWorkbenchTab['state']): void
+  /** Close this tab instance. */
+  closeTab(): void
   completeFocus(): void
 }
 
@@ -188,10 +200,10 @@ export type MessageImagesProps = PropsRuntime<'conversation.message.images'> & P
 
 /** Details-panel callbacks. */
 export interface DetailsInjected {
+  workbench: IConversationDetailsController
   closeDetails: () => void
-  completeDetailsFocus: () => void
   hooks: { detailsViews: SnapshotStore<readonly DetailsViewTab[]> }
-  selectDetailsView: (viewId: string) => void
+  openDetailsView: (viewId: string) => void
 }
 
 /** Callbacks and live View roster for the Conversation Workbench launcher. */
@@ -210,7 +222,6 @@ export type DetailsLauncherProps =
 export type DetailsSlotProps =
   PropsRuntime<'details'>
   & PropsRenderSlots<'conversation.details.view'>
-  & PropsStore<ChatStore>
   & InjectFace<DetailsInjected>
   & PropsLocale<'chat'>
 

@@ -4,9 +4,6 @@ import type { ChatStoreState, SelectionTarget, TurnProcessViewEntry } from './co
 
 type ChatActions = {
   select: (draft: ChatStoreState, target: SelectionTarget | null) => void
-  openDetailsView: (draft: ChatStoreState, viewId: string, focus?: string) => void
-  clearDetailsView: (draft: ChatStoreState) => void
-  clearDetailsFocus: (draft: ChatStoreState) => void
   setTurnProcessOpen: (
     draft: ChatStoreState,
     turn: number,
@@ -34,18 +31,9 @@ export function storedTurnProcessEntry(
  */
 export function createChatStore(): EngineStoreHandle<ChatStoreState, ChatActions> {
   return defineStore({
-    init: (): ChatStoreState => ({ selection: null, detailsView: null, detailsFocus: null, turnProcesses: [] }),
+    init: (): ChatStoreState => ({ selection: null, turnProcesses: [] }),
     actions: {
       select: (draft, target: SelectionTarget | null) => { draft.selection = target },
-      openDetailsView: (draft, viewId, focus) => {
-        draft.detailsView = viewId
-        draft.detailsFocus = focus ?? null
-      },
-      clearDetailsView: (draft) => {
-        draft.detailsView = null
-        draft.detailsFocus = null
-      },
-      clearDetailsFocus: (draft) => { draft.detailsFocus = null },
       setTurnProcessOpen: (draft, turn, answerStep, open) => {
         const index = draft.turnProcesses.findIndex(entry => entry.turn === turn)
         if (!open) {

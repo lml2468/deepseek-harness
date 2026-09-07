@@ -17,6 +17,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import { SessionSeq, type SessionId } from '@deepseek-ai/dsh-session/types'
 import { createChatStore } from '../src/client/stores.ts'
+import { createConversationWorkbenchStore } from '../src/client/details/workbench-store.ts'
 import type { DetailsLauncherInjected } from '../src/client/contract/slots.ts'
 
 usePinnedBrowserLanguages('zh-CN')
@@ -32,6 +33,7 @@ const ATTACHMENT = {
 
 type ChatInstance = ReturnType<ReturnType<typeof createChatStore>['create']>
 type ChatActions = ChatInstance['actions']
+type WorkbenchInstance = ReturnType<ReturnType<typeof createConversationWorkbenchStore>['create']>
 
 function sessionFakeFor() {
   return {
@@ -119,7 +121,7 @@ describe('Chat inject API', () => {
     injected.openDetails({ turnSeq: 2, callId: 'c1' })
     expect(instance.store.getSnapshot().selection).toEqual({ turnSeq: 2, callId: 'c1' })
     expect(b.layout.openDetails).toHaveBeenCalledOnce()
-    expect(b.runtime.storeOf('details', ROOT)).toBe(instance)
+    expect(b.runtime.storeOf('details', ROOT)).not.toBe(instance)
     expect(b.runtime.storeOf('conversation.session', ROOT)).not.toBe(instance)
     await b.runtime.dispose()
   })
@@ -127,7 +129,7 @@ describe('Chat inject API', () => {
   it('opens the first registered Workbench View from the shared header launcher', async () => {
     const b = await bench()
     b.runtime.sessions.open(ROOT)
-    const { instance } = b.chatViewApi(ROOT)
+    b.chatViewApi(ROOT)
     const entry = b.runtime.slots.entries('conversation.session.header.utilities')
       .find(candidate => candidate.options.id === 'workbench')!
     const injected = (entry.inject as unknown as () => DetailsLauncherInjected)()
@@ -135,7 +137,9 @@ describe('Chat inject API', () => {
     expect(injected.hooks.detailsViews.getSnapshot().map(view => view.id)).toEqual(['tool'])
     injected.openDetails()
 
-    expect(instance.store.getSnapshot().detailsView).toBe('tool')
+    const workbench = b.runtime.storeOf('details', ROOT) as WorkbenchInstance
+    expect(workbench.getSnapshot()).toMatchObject({ activeTabId: 'tool' })
+    expect(workbench.getSnapshot().tabs.map(tab => tab.viewId)).toEqual(['tool'])
     expect(b.layout.openDetails).toHaveBeenCalledOnce()
     await b.runtime.dispose()
   })
@@ -169,20 +173,16 @@ describe('Chat inject API', () => {
   it('closes details while sharing selection through the Chat store', async () => {
     const b = await bench()
     const entry = b.runtime.slots.entries('details')[0]!
-    const store = b.runtime.storeOf('details', ROOT) as ChatInstance
-    const injected = (entry.inject as unknown as (
-      sessionId: SessionId,
-      actions: ChatActions,
-    ) => DetailsInjected)(ROOT, store.actions)
+    const store = b.runtime.storeOf('details', ROOT) as WorkbenchInstance
+    const injected = (entry.inject as unknown as (sessionId: SessionId) => DetailsInjected)(ROOT)
     expect(Object.keys(injected)).toEqual([
-      'hooks', 'closeDetails', 'completeDetailsFocus', 'selectDetailsView',
+      'workbench', 'hooks', 'closeDetails', 'openDetailsView',
     ])
-    store.actions.openDetailsView('tool', 'call-1')
-    injected.completeDetailsFocus()
-    expect(store.store.getSnapshot().detailsFocus).toBeNull()
+    injected.openDetailsView('tool')
+    expect(store.getSnapshot().activeTabId).toBe('tool')
     injected.closeDetails()
     expect(b.layout.closeDetails).toHaveBeenCalledOnce()
-    expect(store).toBe(b.runtime.storeOf('conversation.view', ROOT))
+    expect(store).not.toBe(b.runtime.storeOf('conversation.view', ROOT))
     await b.runtime.dispose()
   })
 

@@ -27,6 +27,7 @@ import { registerChatNodeRenderers } from './chat/register-node-renderers.ts'
 import { registerConversationNodes } from './conversation-nodes/register.ts'
 import { DetailsLauncher, DetailsPanel, ToolDetailsView } from './details/DetailsPanel.tsx'
 import { ConversationDetailsController } from './details/controller.ts'
+import { createConversationWorkbenchStore } from './details/workbench-store.ts'
 import { en, NS, zh } from './locale.ts'
 import { TranscriptViewRow, type TranscriptViewRowInjected } from './settings/TranscriptViewRow.tsx'
 import { createChatStore } from './stores.ts'
@@ -88,11 +89,31 @@ export function apply(ctx: Context): void {
     return tabs
   }
   const detailsViews = createSnapshotStore<readonly DetailsViewTab[]>(detailsViewTabs())
+  const workbenchStoreBase = createConversationWorkbenchStore()
   const detailsController = new ConversationDetailsController(
     ctx.sessions,
     ctx.layout,
-    () => new Set(detailsViewTabs().map(view => view.id)),
+    detailsViewTabs,
+    workbenchStoreBase,
   )
+  const workbenchStore: typeof workbenchStoreBase = {
+    spec: workbenchStoreBase.spec,
+    create: (scopeKey?: string) => {
+      if (scopeKey === undefined) throw new Error('ui-chat: Workbench store requires a Session scope')
+      const sessionId = scopeKey as SessionId
+      const instance = detailsController.mount(sessionId)
+      return {
+        actions: instance.actions,
+        getSnapshot: () => instance.getSnapshot(),
+        subscribe: listener => instance.subscribe(listener),
+        store: instance.store,
+        clearPersisted: () => {
+          detailsController.detach(sessionId, instance)
+          instance.clearPersisted()
+        },
+      }
+    },
+  }
   ctx.effect(() => {
     const disposeService = ctx.reflect.provide('conversationDetails', detailsController)
     const refresh = () => {
@@ -105,6 +126,7 @@ export function apply(ctx: Context): void {
     return () => {
       disposeLocale()
       disposeSlots()
+      detailsController.dispose()
       void disposeService()
     }
   }, 'ui-chat: conversation details controller')
@@ -138,7 +160,6 @@ export function apply(ctx: Context): void {
       },
       store: chatStore,
       inject: (sessionId: SessionId, actions: BoundActions<typeof chatStore>): ChatViewInjected => {
-        detailsController.attach(sessionId, actions)
         const binding = ctx.sessions.binding(sessionId)
         if (binding === undefined) throw new Error(`ui-chat: unknown session "${sessionId}"`)
         const session = binding.session
@@ -194,16 +215,13 @@ export function apply(ctx: Context): void {
     name: 'details',
     locale: NS,
     children: { 'conversation.details.view': { kind: 'list', scope: 'session' } },
-    store: chatStore,
-    inject: (sessionId: SessionId, actions: BoundActions<typeof chatStore>): DetailsInjected => {
-      detailsController.attach(sessionId, actions)
-      return {
-        hooks: { detailsViews },
-        closeDetails: () => { detailsController.close() },
-        completeDetailsFocus: () => { actions.clearDetailsFocus() },
-        selectDetailsView: (viewId) => { detailsController.open(viewId) },
-      }
-    },
+    store: workbenchStore,
+    inject: (sessionId: SessionId): DetailsInjected => ({
+      workbench: detailsController,
+      hooks: { detailsViews },
+      closeDetails: () => { detailsController.close() },
+      openDetailsView: (viewId) => { detailsController.openFor(sessionId, viewId) },
+    }),
   }, DetailsPanel))
 
   ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
@@ -215,8 +233,10 @@ export function apply(ctx: Context): void {
       hooks: { detailsViews },
       openDetails: () => {
         const first = detailsViews.getSnapshot().at(0)
-        const viewId = detailsController.activeViewId ?? first?.id
-        if (viewId !== undefined) detailsController.open(viewId)
+        const snapshot = detailsController.getSnapshot()
+        const active = snapshot.tabs.find(tab => tab.id === snapshot.activeTabId)
+        if (active !== undefined) detailsController.openTab(active)
+        else if (first !== undefined) detailsController.open(first.id)
       },
     }),
   }, DetailsLauncher))
