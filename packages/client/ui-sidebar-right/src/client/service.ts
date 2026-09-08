@@ -56,9 +56,12 @@ interface Adoption {
 
 /**
  * Create the public controller and the plugin-private store adoption callback.
- * Adoption subscribes without reconciling; the first store commit creates occurrences.
+ * Adoption reconciles the current snapshot and subscribes to later commits.
  * @param tabs - registered tab types.
  * @param pin - resource retention for an occurrence's lifetime.
+ * The initial snapshot is reconciled immediately so restored tabs have their
+ * occurrences before the first render; later commits stay synchronized by the
+ * subscription.
  * @returns the controller and a callback releasing exactly its own adoption.
  */
 export function createSidebarRightController(tabs: SidebarRightTabRegistry, pin: PinResource): {
@@ -77,6 +80,7 @@ export function createSidebarRightController(tabs: SidebarRightTabRegistry, pin:
       }
       const adoption: Adoption = { store, unsubscribe: store.subscribe(sync) }
       adopted.set(sessionId, adoption)
+      sync()
       return () => {
         adoption.unsubscribe()
         if (adopted.get(sessionId) === adoption) adopted.delete(sessionId)

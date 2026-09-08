@@ -492,13 +492,17 @@ describe('SidebarRightController — a tab\'s own actions', () => {
 
   it('adoption syncs the Tab domain on each commit of that store: the seeded guide is pinned, a closed tab aborted', () => {
     const { controller, adopt, instance, pin } = harness()
+    instance.actions.open(SESSION)
+    const restored = Object.values(instance.getSnapshot().bySession[SESSION]?.layout.tabs ?? {})[0]
+    if (restored === undefined) throw new Error('expected the restored guide')
     const first = adopt(SESSION, instance)
-    // Nothing is synced at adoption, and a commit that materializes another
-    // session leaves this session's occurrences alone.
+    // Adoption reconciles a restored snapshot before its first render, while a
+    // commit that materializes another session leaves this session alone.
+    expect(controller.tabDomain.occurrence(SESSION, restored)).toBeDefined()
+    expect(pin).toHaveBeenCalledWith('sidebar://guide', expect.any(AbortSignal))
+    pin.mockClear()
     instance.actions.open(OTHER)
     expect(pin).not.toHaveBeenCalled()
-    instance.actions.open(SESSION)
-    expect(pin).toHaveBeenCalledWith('sidebar://guide', expect.any(AbortSignal))
     instance.actions.openContent(SESSION, { kind: 'text', contentId: A_TXT, title: 'a' }, () => {})
     const surface = instance.getSnapshot().bySession[SESSION]
     const tab = Object.values(surface?.layout.tabs ?? {}).find(record => record.contentId === A_TXT)
