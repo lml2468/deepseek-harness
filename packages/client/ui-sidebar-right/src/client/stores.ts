@@ -225,6 +225,7 @@ export function createSidebarRightStore(
 ): EngineStoreHandle<SidebarRightState, SidebarRightActions> {
   return defineStore({
     init: (): SidebarRightState => ({ bySession: {} }),
+    persist: 'dsh.conversation.workbench.v1',
     actions: {
       // Materialize a session's surface without changing it, so the first read
       // after a session switch sees the collapsed default rather than nothing.

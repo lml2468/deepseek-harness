@@ -8,7 +8,7 @@ This page is the reference for the subsystem's contracts: addresses, tab-type re
 
 ## Position and ownership
 
-One docking surface exists per Session, held in a session-scoped slot store and drawn by the `rightbar` seat; a reload returns every session to the collapsed default, and switching sessions keeps each surface where it was ([state](../../packages/client/ui-sidebar-right/README.md#state)). The surface's every change is one recorded history entry computed by the kit's pure planners; a docked pane never stays empty, and the last pane reseeds the guide tab.
+One docking surface exists per Session, held in a persisted session-scoped slot store and drawn by the `rightbar` seat; a reload restores each Session's surface, and switching Sessions keeps them isolated ([state](../../packages/client/ui-sidebar-right/README.md#state)). The surface's every change is one recorded history entry computed by the kit's pure planners; a docked pane never stays empty, and the last pane reseeds the guide tab.
 
 A tab type is two registrations that share one `kind`: a static definition in `ctx.sidebarRightTabs` saying which addresses the type opens, and a keyed slot registration supplying its body. The framework injects `useTabInfo()` for live Sidebar, pane and tab information; each type keeps its own state in its slot store. Packages import each other's declarations only as types.
 
@@ -126,7 +126,7 @@ The Host `ctx.workspaceFiles` service and the generated `workspaceFiles` Remote 
 <a id="not-built"></a>
 ## Not built
 
-- Persistence: layout state is memory-only; a reload starts every session collapsed, and no session's tabs are visible from another.
+- Persistence is browser-local: a reload restores each Session's layout, but no Session's tabs are visible from another and no layout state enters the Session log or synchronizes to another browser.
 - A read-only layout snapshot or subscription on `ctx.sidebarRight`: the service exposes operations only, and dockkit's `LayoutState`/`LayoutOp` are internal.
 - A capability-discovery array (`features`) on the service.
 - An `option` priority band: nothing lists a type without letting it claim.

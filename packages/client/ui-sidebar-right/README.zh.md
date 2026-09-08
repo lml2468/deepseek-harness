@@ -63,7 +63,7 @@ kind: "package-reference"
 
 每个动作之后，套件的 settle planner 保证停靠面有内容：最后一个 tab 被关闭、搬走或浮出的停靠格会被并掉；只剩根格且它为空时，重新播种引导 tab。永远至少有一个 tab，永远没有空格——因此没有单独的「关闭格」手势。
 
-状态只在内存中。刷新会让每个会话回到折叠的默认态；切换会话则让每个停靠面留在原处。
+状态以 `dsh.conversation.workbench.v1` 为键持久化到浏览器存储中，并由 Slot 作用域键隔离不同会话。刷新会恢复各会话的 tab、活动 pane、展示模式与展开状态；切换会话时各 surface 保持隔离。布局仍只是呈现状态，永不进入会话日志。
 
 <a id="extension-seats"></a>
 ## 扩展席位
@@ -112,7 +112,7 @@ None; this package neither assembles nor sends a provider request.
 
 <a id="known-limitations-and-deferred-work"></a>
 
-- **只在内存中。** 不持久化任何东西；刷新让每个会话从折叠态开始。
+- **仅限本地浏览器。** 布局持久化不会跨浏览器或设备同步，也不会进入会话日志。
 - **没有会话就没有停靠面。** 状态按会话 id 键控，因此 hero 画面右侧什么都不显示。
 - **硬编码的层叠。** 面板与浮窗宿主使用固定的 z-index 值，因为客户端还没有 z-index token 层。
 - **未暴露撤销。** 记录的序列只能通过 `@internal` 服务方法步进；产品控件是有意缺席的。

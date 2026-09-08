@@ -7,15 +7,18 @@
  * kit's gestures reach — floating-panel moves and resizes, divider drags — and
  * the sequence's ends.
  */
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { LayoutState, PaneId, TabId } from '@deepseek-ai/dsh-client-ui-dockkit'
 import { dockPaneIds, findTabPane, getPane, getSplit } from '@deepseek-ai/dsh-client-ui-dockkit'
 import { createSidebarRightStore } from '../src/client/stores.ts'
 
 const SESSION = 's-test'
+let harnessRevision = 0
+
+afterEach(() => { vi.unstubAllGlobals() })
 
 function harness() {
-  const instance = createSidebarRightStore(() => 'Start').create()
+  const instance = createSidebarRightStore(() => 'Start').create(`test-${String(harnessRevision++)}`)
   instance.actions.open(SESSION)
   const surface = () => {
     const held = instance.getSnapshot().bySession[SESSION]
@@ -33,6 +36,26 @@ function harness() {
 }
 
 describe('createSidebarRightStore — the sequence', () => {
+  it('restores each Session workbench independently after a reload', () => {
+    const backing = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => backing.get(key) ?? null,
+      setItem: (key: string, value: string) => { backing.set(key, value) },
+      removeItem: (key: string) => { backing.delete(key) },
+    })
+    const handle = createSidebarRightStore(() => 'Start')
+    const first = handle.create('session-a')
+    first.actions.open(SESSION)
+    first.actions.openContent(SESSION, {
+      kind: 'text', contentId: 'dsh-resource://file/session/s-test/a.txt', title: 'a',
+    }, () => {})
+
+    const restored = handle.create('session-a').getSnapshot()
+    expect(Object.values(restored.bySession[SESSION]!.layout.tabs).map(tab => tab.title))
+      .toEqual(['Start', 'a'])
+    expect(handle.create('session-b').getSnapshot()).toEqual({ bySession: {} })
+  })
+
   it.each(['left', 'right'] as const)('splits one pane at its %s edge and records the tab move as one reversible intent', (zone) => {
     const { actions, layout, entries, guide } = harness()
     actions.openContent(SESSION, {

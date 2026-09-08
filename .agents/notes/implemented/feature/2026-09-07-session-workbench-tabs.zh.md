@@ -10,13 +10,13 @@ Conversation 详情栏一次只能显示一个已注册 View。打开另一个 V
 
 ## 决定
 
-`ui-chat` 为每个 Session 持有一个持久化 Workbench store。该 store 在 `dsh.conversation.workbench.v1` 下记录 version-one tab 列表和活动 tab id；每个 tab 只包含自身 id、已注册 View id、标题、可关闭标记和 JSON 展示状态。store 不包含 Session 数据、Workspace 数据、资源内容、加载状态、错误、滚动位置或仅当前进程有效的 focus 请求。
+`ui-sidebar-right` 为每个 Session 持有一个持久化 Workbench surface。Slot runtime 以 `dsh.conversation.workbench.v1` 为基础键为每个 Session 创建独立 store 实例；该实例记录 DockKit 布局、操作历史与 id 计数。tab 记录只包含导航身份和展示元数据。store 不包含 Session 数据、Workspace 数据、资源内容、加载状态、错误、滚动位置或仅当前进程有效的导航请求。
 
-Conversation details controller 是唯一的变更接口。`open(viewId)` 按 View id 寻址 singleton tab，`openTab(tab)` 接收由调用方寻址的 resource tab。两个操作都按 tab id 去重、激活结果，并打开由 layout 持有的栏。controller 还负责激活、更新、排序和关闭 tab。关闭栏会保留 store；关闭最后一个 tab 会同时关闭栏。关闭活动 tab 时优先选择其左侧邻项，其次选择右侧邻项。
+`ctx.sidebarRight` 是公开的变更接口。`openTab(kind)` 打开 page 类型，`openResource(address)` 则通过 tab registry 解析 resource 类型。两个操作都按 `(kind, contentId)` 去重、激活结果，并打开由 layout 持有的栏。DockKit action 把聚焦、移动、分栏、悬浮、停靠和关闭记为布局操作。关闭栏会保留 store；关闭最后一个 tab 时重新种入引导页，不留下空 pane。
 
-详情面板渲染语义化 tab list、溢出与添加菜单、拖动排序、键盘导航、逐 tab 关闭操作，以及包围活动 View 的独立错误边界。仅挂载活动 View。View 接收不可变 tab descriptor、活动标记、仅当前进程有效的 focus 请求、JSON 状态更新方法、关闭操作和 focus 确认方法。内置 Tool 详情 View 与贡献的 View 使用相同 singleton 路径。
+右侧 Sidebar 在停靠 pane 与悬浮面板中渲染语义化 tab list、添加控件、拖动排序、键盘导航和逐 tab 关闭操作。只挂载活动 tab 的正文。tab 类型通过 `useTabInfo()` 读取自身 occurrence，而自己的 Slot store 持有轻量展示状态。内置与外部贡献的 tab 类型使用同一个 registry 和 keyed Slot 路径。
 
-View 注册继续由 Cordis 生命周期持有。View 插件卸载时，controller 删除引用该 View 的全部 tab，并持久化清理结果。持久化输入在 local-storage 边界解码；格式损坏时只重置对应 Session 的 Workbench 展示状态。
+tab 类型注册继续由 Cordis 生命周期持有。类型插件卸载时，其 occurrence 由 Tab domain 释放；持久化布局仍是浏览器本地状态，与 Session log 分离。每个 Session 的作用域键把自己的持久化值与其他 Session 隔离。
 
 ## 曾考虑的替代方案
 
@@ -26,12 +26,12 @@ View 注册继续由 Cordis 生命周期持有。View 插件卸载时，controll
 
 **挂载所有非活动 View 并隐藏。**否决：文件、浏览器和文档 viewer 可能持有大资源和后台工作。Workbench 只挂载活动 View；每个 View 在激活时恢复轻量展示状态。
 
-**在同一变更中增加终端、侧边对话、分栏或浮窗概念。**否决：这些能力有独立的执行和布局归属。Workbench 只提供单个右侧多 tab 栏。
+**在同一变更中增加终端或侧边对话产品概念。**否决：这些能力有独立的执行归属。通用 Sidebar 可以分栏或悬浮 tab，但不会因此持有任何一种产品概念。
 
 ## 后果
 
-Session 可以在导航和应用重启之间保留多个产品与 resource tab，而不复制 conversation 或资源内容。产品插件用稳定 id 寻址 resource tab，并在挂载时重新校验实时资源。切换 Session 会原子替换整组 tab。该设计有意不保留未激活 tab 的组件挂载状态、进行中的 View 请求和资源 lease；View 只保存 JSON 展示选择，并在激活时重新获取实时资源。
+Session 可以在导航和应用重启之间保留自己的 DockKit surface，而不复制 conversation 或资源内容。产品插件用稳定 content id 寻址 resource tab，并在挂载时重新校验实时资源。切换 Session 会原子替换整个 surface。该设计有意不做跨浏览器同步，也不保留未激活 tab 的组件挂载状态或进行中的工作；tab 类型在激活时重新获取实时资源。
 
 ## 测试
 
-Store 测试覆盖解码、Session 隔离、去重、状态更新、排序、关闭后选择和 View 移除。Controller 测试覆盖 Session 切换、focus 生命周期、layout 可见性和注册协调。组件测试覆盖 tab 激活、关闭、排序、键盘导航、菜单和 View 级错误隔离。组装后的 Web 构建与浏览器场景验证共享 Slot 与 layout 路径。
+Store 测试覆盖 Session 作用域持久化、布局操作、排序、关闭后选择和引导页收敛。Controller 测试覆盖 Session 切换、focus 生命周期、layout 可见性和注册协调。组件测试覆盖 tab 激活、关闭、排序、键盘导航、菜单和 tab 隔离。组装后的 Web 构建与浏览器场景验证共享 Slot 与 layout 路径。

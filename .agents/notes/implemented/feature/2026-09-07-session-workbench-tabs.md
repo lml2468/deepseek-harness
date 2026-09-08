@@ -10,13 +10,13 @@ The Conversation details column could display only one registered View at a time
 
 ## Decision
 
-`ui-chat` owns one persisted Workbench store per Session. The store records a version-one list of tabs and the active tab id under `dsh.conversation.workbench.v1`; each tab contains only its id, registered View id, title, closable flag, and JSON presentation state. The store does not contain Session data, Workspace data, resource contents, loading state, errors, scroll positions, or process-local focus requests.
+`ui-sidebar-right` owns one persisted Workbench surface per Session. The Slot runtime gives each Session its own store instance under `dsh.conversation.workbench.v1`; that instance records the DockKit layout, operation history and id counter. Tab records contain only navigation identity and presentation metadata. The store does not contain Session data, Workspace data, resource contents, loading state, errors, scroll positions, or process-local navigation requests.
 
-The Conversation details controller is the sole mutation interface. `open(viewId)` addresses a singleton tab by View id, while `openTab(tab)` accepts a caller-addressed tab for resource instances. Both operations deduplicate by tab id, activate the result, and open the layout-owned column. The controller also activates, updates, reorders, and closes tabs. Closing the column preserves the store; closing the final tab closes the column. Closing an active tab selects its left neighbor before its right neighbor.
+`ctx.sidebarRight` is the public mutation interface. `openTab(kind)` opens a page type, while `openResource(address)` resolves a resource type through the tab registry. Both operations deduplicate by `(kind, contentId)`, activate the result and open the layout-owned column. DockKit actions focus, move, split, float, dock and close tabs as recorded layout operations. Closing the column preserves the store; closing the last tab reseeds the guide rather than leaving an empty pane.
 
-The details panel renders a semantic tab list, overflow and add menus, drag reordering, keyboard navigation, per-tab close actions, and one error boundary around the active View. Only the active View is mounted. A View receives its immutable tab descriptor, an active flag, a process-local focus request, a JSON-state updater, a close action, and a focus acknowledgement. The built-in Tool details View uses the same singleton path as contributed Views.
+The right Sidebar renders semantic tab lists, add controls, drag reordering, keyboard navigation and per-tab close actions across its docked panes and floating panels. Only active tab bodies mount. A tab type receives its occurrence through `useTabInfo()`, while its own Slot store owns any lightweight presentation state. Built-in and contributed tab types use the same registry and keyed Slot path.
 
-View registration remains lifecycle-owned by Cordis. When a View plugin unloads, the controller removes every tab that references that View and persists the cleaned result. Persisted input is decoded at the local-storage boundary; malformed state resets only that Session's Workbench presentation state.
+Tab-type registration remains lifecycle-owned by Cordis. When a type plugin unloads, its occurrences are released through the Tab domain while the persisted layout remains browser-local and separate from the Session log. Each Session's scope key isolates its persisted value from every other Session.
 
 ## Alternatives considered
 
@@ -26,12 +26,12 @@ View registration remains lifecycle-owned by Cordis. When a View plugin unloads,
 
 **Mount every inactive View and hide it.** Rejected because file, browser, and document viewers may retain large resources and background work. The Workbench mounts only the active View; each View restores its lightweight presentation state when activated.
 
-**Add terminal, side-chat, split-pane, or floating-window concepts to the same change.** Rejected because those capabilities have independent execution and layout ownership. The Workbench provides only a single right-hand tabbed column.
+**Add terminal or side-chat product concepts to the same change.** Rejected because those capabilities have independent execution ownership. The generic Sidebar may split or float tabs without acquiring either product concept.
 
 ## Consequences
 
-A Session can retain several product and resource tabs across navigation and application restart without copying conversation or resource contents. Product plugins address resource tabs with stable ids and revalidate live resources when mounted. Switching Sessions changes the entire tab set atomically. The design intentionally gives up preserving mounted component state, in-flight View requests, and resource leases for inactive tabs; Views store only JSON presentation choices and reacquire live resources when active.
+A Session retains its DockKit surface across navigation and application restart without copying conversation or resource contents. Product plugins address resource tabs with stable content ids and revalidate live resources when mounted. Switching Sessions changes the entire surface atomically. The design intentionally gives up cross-browser synchronization and preserving mounted component state or in-flight work for inactive tabs; tab types reacquire live resources when active.
 
 ## Testing
 
-Store tests cover decode, Session isolation, deduplication, state updates, ordering, close selection, and View removal. Controller tests cover Session switching, focus lifetime, layout visibility, and registration reconciliation. Component tests cover tab activation, closing, reordering, keyboard navigation, menus, and View-level error isolation. The assembled Web build and browser scenarios verify the shared Slot and layout path.
+Store tests cover Session-scoped persistence, layout operations, ordering, close selection and guide settlement. Controller tests cover Session switching, focus lifetime, layout visibility and registration reconciliation. Component tests cover tab activation, closing, reordering, keyboard navigation, menus and tab isolation. The assembled Web build and browser scenarios verify the shared Slot and layout path.

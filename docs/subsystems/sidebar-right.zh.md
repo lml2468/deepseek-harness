@@ -8,7 +8,7 @@
 
 ## 定位与归属
 
-每个会话恰有一个停靠面，保存在会话作用域的 slot store 里、由 `rightbar` 席位绘制；刷新页面后每个会话回到折叠的默认态，切换会话时各自的面保持原状（[状态](../../packages/client/ui-sidebar-right/README.zh.md#state)）。面的每一次变化都是 kit 纯规划器算出的一条历史记录；停靠的 pane 从不空着，最后一个 pane 会重新种入引导 tab。
+每个会话恰有一个停靠面，保存在持久化的会话作用域 slot store 里、由 `rightbar` 席位绘制；刷新页面后恢复各会话的 surface，切换会话时各自保持隔离（[状态](../../packages/client/ui-sidebar-right/README.zh.md#state)）。面的每一次变化都是 kit 纯规划器算出的一条历史记录；停靠的 pane 从不空着，最后一个 pane 会重新种入引导 tab。
 
 一个 tab 类型是共用一个 `kind` 的两次注册：在 `ctx.sidebarRightTabs` 里的静态定义说明该类型打开哪些地址，一次 keyed slot 注册提供它的正文。框架注入 `useTabInfo()` 以读取 Sidebar、窗格和标签的实时信息；各类型把自身状态放在 slot store 里。各包之间只以类型形式引用彼此的声明。
 
@@ -126,7 +126,7 @@ Host 的 `ctx.workspaceFiles` 服务与生成的 `workspaceFiles` Remote 命名�
 <a id="not-built"></a>
 ## 不做
 
-- 持久化：布局状态只在内存里；刷新后每个会话从折叠开始，任何会话的 tab 都不会出现在另一个会话里。
+- 持久化仅限本地浏览器：刷新会恢复各会话的布局，但任何会话的 tab 都不会出现在另一个会话中；布局状态既不进入会话日志，也不会同步到另一浏览器。
 - `ctx.sidebarRight` 上的只读布局快照或订阅：服务只暴露操作，dockkit 的 `LayoutState`/`LayoutOp` 是内部的。
 - 服务上的能力探测数组（`features`）。
 - `option` 优先级档：没有「只列出、不许认领」的类型。
