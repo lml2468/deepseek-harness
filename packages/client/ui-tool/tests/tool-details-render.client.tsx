@@ -49,6 +49,8 @@ export function ToolWorkbenchFixture(props: ToolWorkbenchFixtureProps) {
     subscribe: () => () => {},
     open: () => {},
     openTab: () => {},
+    openTabFor: () => {},
+    registerWorkspacePathOpener: () => () => {},
     activateTab: () => {},
     updateTab: () => {},
     moveTab: () => {},

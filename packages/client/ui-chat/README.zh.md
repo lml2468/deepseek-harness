@@ -29,6 +29,8 @@ Conversation 组装的浏览器 Chat target。本包注册 Chat event definition
 
 Session 级 `conversation.details.view` 列表可以增加右侧 Workbench 视图而不替换 Chat。`ctx.conversationDetails` 可打开 singleton 或由调用方寻址的 resource tab，并可激活、更新、排序和关闭 tab，同时为外部控件暴露一个稳定的可观察 snapshot。持久化的 `dsh.conversation.workbench.v1` store 只包含 tab 身份、View 身份、标题、JSON 展示状态和活动 tab；focus 请求仅存在于当前进程中，每个 Session 使用隔离的 store。关闭栏只会隐藏它而不销毁 tab，关闭最后一个 tab 时也会隐藏栏。tab strip 支持键盘导航、拖动排序、溢出选择，以及用于打开已注册 singleton View 的添加菜单。未声明 label 的 View 仅用于 resource tab：调用方可通过 `openTab()` 打开，但它不会出现在添加菜单中，也不接受 `open()`。每个活动 View 都在独立错误边界内渲染，并接收其 tab、focus 请求、状态更新方法、关闭操作和 focus 确认方法。内置 `tool` View 是普通 singleton tab。移除 View 注册会删除该 View 拥有的全部 tab（[决策](../../../.agents/notes/implemented/feature/2026-09-07-session-workbench-tabs.zh.md)）。
 
+Chat 文件链接会先把 Session id、Chat 中选择的原始路径和当前 Workspace 根目录交给通过 `ctx.conversationDetails.registerWorkspacePathOpener()` 注册的处理器。产品在自己的 Workbench 预览中打开文件后返回 `true`，或返回 `false` 以保留原生 Workspace 路径打开行为。处理器拒绝的请求会显示为现有 Chat 文件打开错误，绝不会静默回退到系统应用。注册入口位于 Chat 自有的 Workbench 控制器，因此遵循插件依赖与生命周期顺序，不依赖兄弟插件服务的反向查找。
+
 -----
 
 <a id="system-prompt-row"></a>

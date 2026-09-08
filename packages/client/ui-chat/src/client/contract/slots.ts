@@ -1,6 +1,6 @@
 /** Chat-owned Slot declarations and composed component props. */
 import type { MessageId } from '@deepseek-ai/dsh-llm/brand'
-import type { SessionSeq } from '@deepseek-ai/dsh-session/types'
+import type { SessionId, SessionSeq } from '@deepseek-ai/dsh-session/types'
 import type {
   ConversationLocationDataStore, ConversationTurnDataMap,
   MessageImageLoader, MessageImagesOwnerProps, RenderMessageImages, TurnLocation,
@@ -65,6 +65,23 @@ export interface ChatFileMentions {
    * @returns link resolver when available.
    */
   forClosing(owner: TurnTailOwnerProps): MarkdownFileMentions | undefined
+}
+
+/** One Workspace path selected from Chat. */
+export interface ChatWorkspacePathOpenRequest {
+  readonly sessionId: SessionId
+  readonly path: string
+  readonly workspaceRoot: string | null
+}
+
+/** Product override for opening a Workspace path from Chat. */
+export interface ChatWorkspacePathOpener {
+  /**
+   * Open one path for the addressed Session.
+   * @param request - Session identity and Workspace-relative path selected in Chat.
+   * @returns whether the product handled the request; false delegates to the native opener.
+   */
+  open(request: ChatWorkspacePathOpenRequest): boolean | Promise<boolean>
 }
 
 declare module '@deepseek-ai/cordis' {

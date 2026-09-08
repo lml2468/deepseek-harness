@@ -185,6 +185,7 @@ export function apply(ctx: Context): void {
           fileMentions: (owner: TurnTailOwnerProps) => ctx.get('chatFileMentions')?.forClosing(owner),
           openFile: async (path) => {
             const cwd = ctx.sessions.list.getSnapshot().byId[sessionId]?.cwd
+            if (await detailsController.openWorkspacePath({ sessionId, path, workspaceRoot: cwd ?? null })) return
             const result = await ctx.remote.session.openWorkspacePath({
               path: resolveWorkspacePath(cwd, path),
             })

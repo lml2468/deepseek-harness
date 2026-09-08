@@ -171,6 +171,35 @@ describe('Chat inject API', () => {
     await b.runtime.dispose()
   })
 
+  it('lets a product handle Chat Workspace paths before native opening', async () => {
+    const b = await bench()
+    const open = vi.fn(async () => true)
+    const details = b.runtime.ctx.get('conversationDetails')
+    expect(details).toBeDefined()
+    const dispose = details!.registerWorkspacePathOpener({ open })
+    const { injected } = b.chatViewApi(ROOT)
+
+    await injected.openFile('reports/plan.md')
+    expect(open).toHaveBeenCalledExactlyOnceWith({
+      sessionId: ROOT,
+      path: 'reports/plan.md',
+      workspaceRoot: '/proj',
+    })
+    expect(b.openWorkspacePath).not.toHaveBeenCalled()
+
+    open.mockResolvedValueOnce(false)
+    await injected.openFile('.')
+    expect(b.openWorkspacePath).toHaveBeenCalledExactlyOnceWith({ path: '/proj/.' })
+
+    open.mockRejectedValueOnce(new Error('preview unavailable'))
+    await expect(injected.openFile('reports/error.md')).rejects.toThrow('preview unavailable')
+    expect(b.openWorkspacePath).toHaveBeenCalledOnce()
+    dispose()
+    await injected.openFile('reports/native.md')
+    expect(b.openWorkspacePath).toHaveBeenCalledWith({ path: '/proj/reports/native.md' })
+    await b.runtime.dispose()
+  })
+
   it('fails loud when a Chat View inject resolves no Session', async () => {
     const b = await bench()
     const entry = b.runtime.slots.entries('conversation.view')[0]!
