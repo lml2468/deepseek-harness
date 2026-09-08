@@ -1,5 +1,5 @@
 ---
-description: "Browser Chat target that renders Session conversation nodes, details, historical images, actions, localization, and scroll state."
+description: "Browser Chat target that renders Session conversation nodes, historical images, actions, localization, and scroll state."
 kind: "package-reference"
 ---
 # @deepseek-ai/dsh-client-ui-chat
@@ -8,14 +8,12 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-The browser Chat target for Conversation assembly. It registers Chat event definitions and snapshot construction, supplies `useChat`, renders transcript nodes and details, and owns Chat-specific stores, actions, localization, and scroll restoration; historical image URLs resolve through the Conversation-owned per-session cache (`ctx.uiConversation.imageUrl`). Its Assistant and Turn Tail definitions fold packed historical Assistant runs without expanding their members. Steering classification retains only next-step Inbox IDs through persistent splice state; next-turn splices create no Chat Context. Local submission echoes (`SessionSnapshot.pendingSubmissions`) retain the surface selected when the submit begins: transcript echoes render at the flow tail, steering echoes render with the pending-steering marker, and queued echoes stay out of Chat. Each echo is hidden per render once a user/steering node or queue occurrence carries its prompt `rpcId`, so the handoff is atomic.
+The browser Chat target for Conversation assembly. It registers Chat event definitions and snapshot construction, supplies `useChat`, renders transcript nodes, and owns Chat-specific stores, actions, localization, and scroll restoration; historical image URLs resolve through the Conversation-owned per-session cache (`ctx.uiConversation.imageUrl`). Its Assistant and Turn Tail definitions fold packed historical Assistant runs without expanding their members. Steering classification retains only next-step Inbox IDs through persistent splice state; next-turn splices create no Chat Context. Local submission echoes (`SessionSnapshot.pendingSubmissions`) retain the surface selected when the submit begins: transcript echoes render at the flow tail, steering echoes render with the pending-steering marker, and queued echoes stay out of Chat. Each echo is hidden per render once a user/steering node or queue occurrence carries its prompt `rpcId`, so the handoff is atomic.
 
 ## Table of Contents
 
-- [Workbench views](#workbench-views)
 - [System prompt row](#system-prompt-row)
 - [Turn token usage](#turn-token-usage)
-- [Turn identity header](#turn-identity-header)
 - [Turn Process Folding](#turn-process-folding)
 - [Scroll ownership](#scroll-ownership)
 - [Model Experience](#model-experience)
@@ -24,19 +22,10 @@ The browser Chat target for Conversation assembly. It registers Chat event defin
 
 -----
 
-<a id="workbench-views"></a>
-## Workbench views
-
-The Session-scoped `conversation.details.view` list adds right-hand Workbench views without replacing Chat. `ctx.conversationDetails` opens singleton or caller-addressed resource tabs, activates, updates, reorders, and closes them, and exposes one stable observable snapshot for external controls. The persisted `dsh.conversation.workbench.v1` store contains only tab identity, View identity, title, JSON presentation state, and the active tab; focus requests stay process-local, and each Session receives an isolated store. Closing the column hides it without destroying tabs, while closing the final tab also hides it. The tab strip supports keyboard navigation, drag reordering, overflow selection, and an add menu for registered singleton Views. A View registration with no label is resource-only: callers may address its tabs through `openTab()`, but it does not appear in the add menu or accept `open()`. Each active View renders behind its own error boundary and receives its tab, focus request, state updater, close action, and focus acknowledgement. The built-in `tool` View is an ordinary singleton tab. Removing a View registration removes all tabs owned by that View ([decision](../../../.agents/notes/implemented/feature/2026-09-07-session-workbench-tabs.md)).
-
-Chat file links first offer their Session id, the exact path selected in Chat, and the current Workspace root to the handler registered with `ctx.conversationDetails.registerWorkspacePathOpener()`. A product returns `true` after opening its own Workbench preview, or `false` to retain the native Workspace-path opener. A rejected handler request is surfaced as the existing Chat file-open error and never silently falls through to a system application. Registration lives on the Chat-owned Workbench controller so it follows plugin dependency and lifecycle ordering rather than relying on a sibling plugin service lookup.
-
------
-
 <a id="system-prompt-row"></a>
 ## System prompt row
 
-Chat shows a collapsed `System prompt` row for each non-empty initial or resumed request, explicit message-series start, or real system-field change. It does not repeat the row for same-series config-only or tool-only changes, tool steps, or retries. The row appears before that request's user messages, matching the provider envelope, and expands to the exact model-visible text with its original line breaks. A partial history window renders a non-initial header conservatively until the preceding page arrives; a header without a system prompt creates no row.
+Chat shows a collapsed `System prompt` row for a non-empty initial request, explicit message-series start, real system-field change, or non-initial request whose preceding header is outside the loaded history window. Once that predecessor is available, an unchanged resume does not repeat the row; same-series config-only or tool-only changes, tool steps, and retries also create no repetition. The row appears before that request's user messages, matching the provider envelope, and expands to the exact model-visible text with its original line breaks. A header without a system prompt creates no row.
 
 -----
 
@@ -47,24 +36,17 @@ A completed Turn shows an expandable usage row only when the loaded window inclu
 
 -----
 
-<a id="turn-identity-header"></a>
-## Turn identity header
-
-The Session-scoped `conversation.chat.turnHeader` single slot renders once before a Turn's Assistant response. Its owner exposes the DSH `TurnLocation`, including the authoritative open/closed state and start/end events; product compositions may present their own Agent identity and localized status without replacing Chat nodes or copying Session state. An unoccupied slot renders no header.
-
------
-
 <a id="turn-process-folding"></a>
 ## Turn Process Folding
 
-Settings → General exposes a persisted `Normal` / `Compact` conversation-display preference in the `ui-chat` namespace; `Compact` is the default. Normal leaves process rows visible and renders no Turn-process control. Compact keeps System prompt and closed Context bookkeeping mounted but out of the default reading flow; opening a Turn's process disclosure reveals its Context rows while the System prompt remains available in Normal and Trajectory. Reasoning, Assistant material, Tool rows, and Retry rows remain expanded while a Turn is open. At `turn/end`, its latest Step becomes the final-answer boundary only when it contains non-blank text, an image, or an unknown visible block—and no Tool-call block; preceding Context injection, reasoning, earlier Assistant material, Tool rows, and Retry rows then collapse by default. The control reports Turn-wide durable counts for non-subagent Tool calls, reply-bearing Assistant messages before the final answer, and subagent delegation calls; zero-valued segments are omitted, the Tool and subagent figures are mutually exclusive, and neither System prompt nor Context injection contributes a count. When all three counts are zero, the process still folds and the control reads `Thought for a while`. A full-width divider below the summary separates it from the answer or expanded process rows. User and steering messages, error, max-token, and turn-tail rows stay outside. Terminal errors lead with a localized recovery-oriented summary and retain their durable message and code in a collapsed technical-details disclosure. A newly available process control is inserted without changing the relative order of existing rows: opening human input precedes the control and process rows from their first projection. While older history remains available through Load earlier, process controls stay absent; once history is complete, every eligible closed Turn uses the collapsed default immediately. Stable Chat Node Seats keep every renderer mounted, hidden members add no flow spacing, and a closed control sits 8px above its answer only when no independent input intervenes. Completion collapse does not depend on tail-follow position, so a reader above the tail may see the transcript reflow. A manual close focuses the process control before hiding its members. The session-scoped store records only manually expanded Turn-and-answer-Step generations; a different answer generation starts collapsed ([folding decision](../../../.agents/notes/implemented/feature/2026-08-14-web-turn-process-folding.md), [ordering decision](../../../.agents/notes/implemented/bug-fix/2026-08-26-stable-turn-process-order.md)).
+Settings → General exposes a persisted `Normal` / `Compact` conversation-display preference in the `ui-chat` namespace; `Compact` is the default. Normal leaves process rows visible and renders no Turn-process control. In Compact mode, the System prompt remains independently visible before the opening User throughout the Turn. Context injection, reasoning, Assistant material, Tool rows, and Retry rows remain expanded while a Turn is open. At `turn/end`, its latest Step becomes the final-answer boundary only when it contains non-blank text, an image, or an unknown visible block—and no Tool-call block; preceding Context injection, reasoning, earlier Assistant material, Tool rows, and Retry rows then collapse by default. The control reports Turn-wide durable counts for non-subagent Tool calls, reply-bearing Assistant messages before the final answer, and subagent delegation calls; zero-valued segments are omitted, the Tool and subagent figures are mutually exclusive, and neither System prompt nor Context injection contributes a count. When all three counts are zero, the process still folds and the control reads `Thought for a while`. A full-width divider below the summary separates it from the answer or expanded process rows. User and steering messages, System prompt, error, max-token, and turn-tail rows stay outside, and a closed Turn with no final answer keeps all process evidence visible. A newly available process control is inserted without changing the relative order of existing rows: opening human input precedes the control and process rows from their first projection, while System prompt remains above that input. While older history remains available through Load earlier, process controls stay absent and no members are hidden; once history is complete, every eligible closed Turn uses the collapsed default immediately. Stable Chat Node Seats keep every renderer mounted, hidden members add no flow spacing, and a closed control sits 8px above its answer only when no independent input intervenes. Completion collapse does not depend on tail-follow position, so a reader above the tail may see the transcript reflow. An automatic collapse that would hide keyboard focus keeps the group open and leaves focus in place; a manual close focuses the process control before hiding its members. The session-scoped store records only manually expanded Turn-and-answer-Step generations; a different answer generation starts collapsed.
 
 -----
 
 <a id="scroll-ownership"></a>
 ## Scroll ownership
 
-Chat restores semantic anchors across history prepend and renderer remounts. While the reader is pinned to the floor, `ResizeObserver` follows the new floor and selects the latest loaded Turn without reading row geometry. Once the reader moves away, flow-height changes preserve the top position and the reading-line geometry selects the active Turn. Turn-rail previews paint above sticky Markdown code-block banners, while the rail frame remains inside the transcript band above the composer ([loaded-Turn navigation](../../../.agents/notes/implemented/feature/2026-08-25-loaded-turn-chat-navigation.md)).
+Chat restores semantic anchors across history prepend and renderer remounts. Pinned scroll deliveries without reader movement update follow ownership immediately, before subsequent layout changes can invalidate their floor. Reader movement remains pending until the sampling interval or `scrollend`, even inside the follow threshold, so layout growth cannot erase small scroll gestures. While the reader is pinned to the floor, `ResizeObserver` follows the new floor and selects the latest loaded Turn without reading row geometry. Once the reader moves away, flow-height changes preserve the top position and the reading-line geometry selects the active Turn. Turn-rail previews paint above sticky Markdown code-block banners, while the rail frame remains inside the transcript band above the composer.
 
 -----
 

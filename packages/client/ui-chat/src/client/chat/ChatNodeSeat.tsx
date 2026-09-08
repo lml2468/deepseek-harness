@@ -37,7 +37,7 @@ function turnOf(node: ChatNode | undefined): number | undefined {
 /** Subscribe, apply Turn-process visibility, and dispatch one stable Context key. */
 export const ChatNodeSeat = memo(function ChatNodeSeat({
   nodeKey, useChatNode, useChatNodeProcess, historyIncomplete, compactTranscript,
-  selectedCallId, cwd, openFile, inspectCall, forkAt,
+  cwd, openFile, inspectCall, forkAt,
   loadImage, renderMessageImages, fileMentions, useStore, actions, renderSlot, t,
 }: ChatNodeSeatProps) {
   const node = useChatNode(nodeKey)
@@ -95,16 +95,7 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
     && foldable
     && processPresentation.compactAnswer
     && !processOpen
-  // Compact is the product-facing transcript. Prompt assembly remains fully
-  // inspectable in the Normal transcript and Trajectory, but its System and
-  // Context bookkeeping should not compete with the user's messages in the
-  // default reading flow.
-  const compactMetadata = compactTranscript
-    && (routedNode?.kind === 'system-prompt'
-      || (routedNode?.kind === 'context' && !(processMember && processOpen)))
-  const processHidden = compactMetadata
-    || controllerInactive
-    || (foldable && processMember && !processOpen)
+  const processHidden = controllerInactive || (foldable && processMember && !processOpen)
   const revealProcess = useCallback(() => {
     if (processMember) setOpen(true)
   }, [processMember, setOpen])
@@ -112,7 +103,6 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
   const owner = useMemo<ChatNodeOwnerProps | null>(() => node === undefined
     ? null
     : {
-      selectedCallId,
       cwd,
       openFile,
       inspectCall,
@@ -122,7 +112,7 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
       fileMentions,
       turnProcess,
     }, [
-    node, selectedCallId, cwd, openFile, inspectCall, forkAt,
+    node, cwd, openFile, inspectCall, forkAt,
     loadImage, renderMessageImages, fileMentions, turnProcess,
   ])
   if (routedNode === undefined || owner === null) return null
@@ -141,7 +131,6 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
       data-chat-turn={turn}
       data-turn-process-member={processMember || undefined}
       data-turn-process-hidden={processHidden || undefined}
-      data-compact-metadata={compactMetadata || undefined}
       data-turn-process-answer={compactAnswer || undefined}
     >
       {renderSlot('conversation.chat.node', routedOwner, {

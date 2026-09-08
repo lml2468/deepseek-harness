@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
 
+import type { GlobalStandardProps } from '@deepseek-ai/dsh-client-ui-slots'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useEffect } from 'react'
 import type {
   AssistantMessageNode, ChatNode, ChatNodeOwnerProps, ChatNodeViewProps, ChatSnapshot,
   ChatViewSlotProps, CommandNode, CompactionSummaryNode, ContextMessageNode, ConversationNode,
-  LegacyConversationSlice, ModelRetryNode, RunningToolCall, SelectionTarget, SteeringMessageNode,
-  ToolCallBlock, ToolResultNode, TurnErrorNode, TurnHeaderOwnerProps, TurnMaxTokensNode, UseChatNodeTurnData,
+  LegacyConversationSlice, ModelRetryNode, RunningToolCall, SteeringMessageNode,
+  ToolCallBlock, ToolResultNode, TurnErrorNode, TurnMaxTokensNode, UseChatNodeTurnData,
   TranscriptViewMode, UserMessageNode,
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type {
@@ -42,6 +43,9 @@ import { formatRunDuration } from '../src/client/chat/message-chrome.ts'
 import { ChatSnapshotBuilder } from '../src/client/conversation-nodes/chat-snapshot-builder.ts'
 import type { TurnProcessSpec } from '../src/client/contract/turn-process.ts'
 import { chatSnapshotFixture } from './chat-snapshot-fixture.client.ts'
+
+// Every session-scope fixture carries the resource hook the resources plugin merges into GlobalStandardProps.
+const useResource = (() => ({ status: 'none' as const, value: undefined, failure: undefined, reload: () => {} })) as GlobalStandardProps['useResource']
 
 afterEach(() => {
   cleanup()
@@ -245,7 +249,6 @@ function makeHarness(
   const useChatNodeProcess = bindKeyedSnapshotSelector(
     key => chatSource.source.getSnapshot().nodes.processSource(key),
   )
-  const openDetails = vi.fn<(t: SelectionTarget) => void>()
   const openFile = vi.fn<(path: string) => Promise<void>>().mockResolvedValue(undefined)
   const loadOlder = vi.fn()
   const loadThrough = vi.fn<(seq: number) => Promise<void>>().mockResolvedValue(undefined)
@@ -267,7 +270,6 @@ function makeHarness(
     callId: string
     toolName: string
     block: ToolCallBlock
-    selectedCallId: string | undefined
     openFile: ChatNodeOwnerProps['openFile']
     inspectCall: ChatNodeOwnerProps['inspectCall']
   }> = []
@@ -277,10 +279,6 @@ function makeHarness(
     React.ComponentProps<typeof TurnTailNodeView>['renderSlotChain']
   const renderTurnTailSlot = (() => null) as unknown as
     React.ComponentProps<typeof TurnTailNodeView>['renderSlot']
-  let renderTurnHeaderSlot = (() => null) as unknown as
-    React.ComponentProps<typeof TurnProcessNodeView>['renderSlot']
-  let renderTurnErrorSlot = (() => null) as unknown as
-    React.ComponentProps<typeof TurnErrorNodeView>['renderSlot']
   let nodeSlotOverride: React.ComponentProps<typeof ChatNodeSeat>['renderSlot'] | undefined
   const renderNodeSlot = ((key: string, owner: object, opts?: {
     fallback?: React.ReactNode
@@ -321,18 +319,20 @@ function makeHarness(
         return (
           <TurnErrorNodeView
             {...nodeProps<'turn-error'>()}
-            renderSlot={renderTurnErrorSlot}
+            renderSlot={() => null}
             SessionProvider={props.SessionProvider}
           />
         )
       case 'turn-max-tokens':
         return <TurnMaxTokensNodeView {...nodeProps<'turn-max-tokens'>()} />
       case 'turn-process':
-        return <TurnProcessNodeView
-          {...nodeProps<'turn-process'>()}
-          renderSlot={renderTurnHeaderSlot}
-          SessionProvider={props.SessionProvider}
-        />
+        return (
+          <TurnProcessNodeView
+            {...nodeProps<'turn-process'>()}
+            renderSlot={() => null}
+            SessionProvider={props.SessionProvider}
+          />
+        )
       case 'system-prompt':
         return <SystemPromptNodeView {...nodeProps<'system-prompt'>()} />
       case 'turn-tail':
@@ -353,7 +353,6 @@ function makeHarness(
           callId: block.callId,
           toolName,
           block,
-          selectedCallId: nodeOwner.selectedCallId,
           openFile: nodeOwner.openFile,
           inspectCall: nodeOwner.inspectCall,
         }
@@ -385,6 +384,7 @@ function makeHarness(
     useConversation: bindSnapshotSelector(createSnapshotStore(EMPTY_CONVERSATION_SNAPSHOT)),
     useTrajectory: (() => { throw new Error('unused') }),
     useSessions: emptySessions(),
+    useResource,
     useSessionPendingInteraction: bindSnapshotSelector(
       createSnapshotStore<SessionPendingInteractionSnapshot>(new Map()),
     ),
@@ -406,7 +406,6 @@ function makeHarness(
     viewRequest: null,
     openView,
     completeViewRequest: () => {},
-    openDetails,
     openFile,
     loadOlder,
     loadThrough,
@@ -435,21 +434,14 @@ function makeHarness(
     }
     session.set(sessionUpdate)
   }
-  const setSelection = (next: SelectionTarget | null): void => { chat.actions.select(next) }
   return {
     set, setSession: session.set, setChat: chatSource.set, ChatView, props,
-    openDetails, openFile, loadOlder, loadThrough, openView,
+    openFile, loadOlder, loadThrough, openView,
     setOutline: (value: unknown) => { outlineValue = value },
-    chatScroll, forkAt, setSelection, toolOwners,
+    chatScroll, forkAt, toolOwners,
     setTranscriptView: (mode: TranscriptViewMode) => { transcriptView.set(mode) },
     setNodeRenderer: (renderer: React.ComponentProps<typeof ChatNodeSeat>['renderSlot']) => {
       nodeSlotOverride = renderer
-    },
-    setTurnErrorActions: (renderer: React.ComponentProps<typeof TurnErrorNodeView>['renderSlot']) => {
-      renderTurnErrorSlot = renderer
-    },
-    setTurnHeader: (renderer: React.ComponentProps<typeof TurnProcessNodeView>['renderSlot']) => {
-      renderTurnHeaderSlot = renderer
     },
   }
 }
@@ -584,7 +576,7 @@ describe('ChatView', () => {
     const afterMount = railRenders
     expect(afterMount).toBeGreaterThan(0)
 
-    act(() => { h.setSelection({ turnSeq: 3, callId: 'a', toolName: 'bash' }) })
+    act(() => { h.setTranscriptView('compact') })
 
     expect(railRenders).toBe(afterMount)
   })
@@ -1296,37 +1288,13 @@ describe('ChatView', () => {
   })
 
   it('renders terminal turn failures inline with their durable message and optional code', () => {
-    const h = makeHarness({ nodes: [
-      user(1, 'try'),
-      turnError(2, 'AUTH'),
-      turnError(3, 'MISSING_CREDENTIAL'),
-      turnError(4),
-    ] })
+    const h = makeHarness({ nodes: [user(1, 'try'), turnError(2, 'AUTH'), turnError(3)] })
     const view = render(<h.ChatView {...h.props} />)
     const statuses = view.getAllByRole('status')
-    expect(statuses).toHaveLength(3)
-    expect(statuses[0]?.textContent).toContain('本轮运行失败API 密钥无效')
-    expect(statuses[1]?.textContent).toContain('本轮运行失败缺少运行所需的凭据，请前往设置完成配置后重试。')
-    expect(statuses[2]?.textContent).toContain('本轮运行失败任务未能完成，请检查配置后重试。')
-    const details = view.getAllByText('查看技术详情')
-    expect(details).toHaveLength(3)
-    expect(details[0]?.parentElement?.textContent).toContain('AUTH')
-    expect(details[1]?.parentElement?.textContent).toContain('MISSING_CREDENTIAL')
-    expect(details[2]?.parentElement?.textContent).toContain('plugin exploded')
-  })
-
-  it('renders product actions beside the terminal Turn failure with the durable error owner', () => {
-    const failure = turnError(2, 'AUTH')
-    const h = makeHarness({ nodes: [failure] })
-    const owners: TurnErrorNode[] = []
-    h.setTurnErrorActions(((_key: string, owner: { node: TurnErrorNode }) => {
-      owners.push(owner.node)
-      return <button type="button">修复配置</button>
-    }) as React.ComponentProps<typeof TurnErrorNodeView>['renderSlot'])
-
-    const view = render(<h.ChatView {...h.props} />)
-    expect(view.getByRole('button', { name: '修复配置' })).toBeTruthy()
-    expect(owners).toEqual([failure])
+    expect(statuses.map(status => status.textContent)).toEqual([
+      '本轮运行失败API 密钥无效AUTH',
+      '本轮运行失败plugin exploded',
+    ])
   })
 
   it('renders the max-tokens notice with localized guidance, distinct from turn errors', () => {
@@ -1425,27 +1393,6 @@ describe('ChatView', () => {
     expect(members[0]?.getAttribute('hidden')).toBeNull()
   })
 
-  it('renders one product Turn header from the authoritative Turn location', () => {
-    const h = makeHarness({
-      nodes: [user(1, 'question'), assistant(2, 'final answer', 1, 1)],
-      turnTimings: new Map([[1, { startTime: 1_000, endTime: 5_000 }]]),
-      turnEnds: new Map([[1, 3]]),
-    })
-    const owners: TurnHeaderOwnerProps[] = []
-    h.setTurnHeader(((_key: string, owner: TurnHeaderOwnerProps) => {
-      owners.push(owner)
-      return <div data-testid="turn-header">Agent · {owner.turn.status}</div>
-    }) as React.ComponentProps<typeof TurnProcessNodeView>['renderSlot'])
-
-    const view = render(<h.ChatView {...h.props} />)
-    expect(view.getByTestId('turn-header').textContent).toBe('Agent · closed')
-    expect(view.getByTestId('turn-header').compareDocumentPosition(view.getByText('final answer')))
-      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(owners).toHaveLength(1)
-    expect(owners[0]?.turn.start?.time).toBe(1_000)
-    expect(owners[0]?.turn.end?.time).toBe(5_000)
-  })
-
   it('folds injected Context in place with the rest of the Turn process', () => {
     const h = makeHarness({
       nodes: [
@@ -1469,7 +1416,7 @@ describe('ChatView', () => {
     expect(members.map(member => member.getAttribute('hidden'))).toEqual([null, null, null])
   })
 
-  it('keeps prompt metadata mounted but hidden in Compact while preserving Process behavior', () => {
+  it('keeps the first System prompt above User and outside Process through completion and expansion', () => {
     const builder = new ChatSnapshotBuilder()
     const initial = withSystemPrompt(chatSnapshotFixture({
       nodes: [userInTurn(2, 'question', 1), context(3, 'runtime policy', 1)],
@@ -1479,8 +1426,7 @@ describe('ChatView', () => {
     const promptRow = view.container.querySelector<HTMLElement>('[data-chat-flow-kind="system-prompt"]')!
 
     expect(renderedFlowKinds(view.container)).toEqual(['system-prompt', 'user', 'context'])
-    expect(promptRow.getAttribute('hidden')).toBe('until-found')
-    expect(promptRow.dataset.compactMetadata).toBe('true')
+    expect(promptRow.getAttribute('hidden')).toBeNull()
     expect(promptRow.hasAttribute('data-turn-process-member')).toBe(false)
 
     act(() => {
@@ -1499,7 +1445,7 @@ describe('ChatView', () => {
       'system-prompt', 'user', 'turn-process', 'context', 'assistant-step',
     ])
     expect(view.container.querySelector('[data-chat-flow-kind="system-prompt"]')).toBe(promptRow)
-    expect(promptRow.getAttribute('hidden')).toBe('until-found')
+    expect(promptRow.getAttribute('hidden')).toBeNull()
 
     act(() => {
       h.set({
@@ -1521,7 +1467,7 @@ describe('ChatView', () => {
       'system-prompt', 'user', 'turn-process', 'context', 'assistant-step', 'assistant-step', 'turn-tail',
     ])
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
-    expect(promptRow.getAttribute('hidden')).toBe('until-found')
+    expect(promptRow.getAttribute('hidden')).toBeNull()
     expect(promptRow.hasAttribute('data-turn-process-member')).toBe(false)
     expect(members.map(member => member.dataset.chatFlowKind)).toEqual(['context', 'assistant-step'])
     expect(members.map(member => member.getAttribute('hidden'))).toEqual(['until-found', 'until-found'])
@@ -1530,7 +1476,7 @@ describe('ChatView', () => {
     expect(renderedFlowKinds(view.container)).toEqual([
       'system-prompt', 'user', 'turn-process', 'context', 'assistant-step', 'assistant-step', 'turn-tail',
     ])
-    expect(promptRow.getAttribute('hidden')).toBe('until-found')
+    expect(promptRow.getAttribute('hidden')).toBeNull()
     expect(members.map(member => member.getAttribute('hidden'))).toEqual([null, null])
   })
 
@@ -1697,14 +1643,16 @@ describe('ChatView', () => {
     expect(view.getByLabelText('回到底部')).toBeTruthy()
   })
 
-  it('keeps prompt metadata hidden while a live Turn completes in Compact', () => {
+  it('keeps a focused process row visible when a live Turn completes', () => {
     const h = makeHarness({
       nodes: [user(1, 'question'), context(2, 'runtime policy', 1)],
       running: true,
     })
     const view = render(<h.ChatView {...h.props} />)
+    const contextToggle = view.getByRole('button', { name: '上下文注入' })
     const contextRow = view.container.querySelector<HTMLElement>('[data-chat-flow-kind="context"]')
-    expect(contextRow?.getAttribute('hidden')).toBe('until-found')
+    contextToggle.focus()
+    expect(document.activeElement).toBe(contextToggle)
 
     act(() => { h.set({
       nodes: [
@@ -1716,12 +1664,14 @@ describe('ChatView', () => {
       turnEnds: new Map([[1, 4]]),
     }) })
     const processToggle = turnProcessControl(view.container)!
-    expect(processToggle.getAttribute('aria-expanded')).toBe('false')
-    expect(contextRow?.getAttribute('hidden')).toBe('until-found')
-
-    fireEvent.click(processToggle)
     expect(processToggle.getAttribute('aria-expanded')).toBe('true')
     expect(contextRow?.getAttribute('hidden')).toBeNull()
+    expect(document.activeElement).toBe(contextToggle)
+
+    fireEvent.click(processToggle)
+    expect(document.activeElement).toBe(processToggle)
+    expect(processToggle.getAttribute('aria-expanded')).toBe('false')
+    expect(contextRow?.getAttribute('hidden')).toBe('until-found')
   })
 
   it('keeps a foldable closed Turn fully visible while history is partial', () => {
@@ -1739,7 +1689,7 @@ describe('ChatView', () => {
     const contextRow = view.container.querySelector<HTMLElement>('[data-chat-flow-kind="context"]')
 
     expect(turnProcessControl(view.container)).toBeNull()
-    expect(contextRow?.getAttribute('hidden')).toBe('until-found')
+    expect(contextRow?.getAttribute('hidden')).toBeNull()
     expect(contextRow?.hasAttribute('data-turn-process-member')).toBe(false)
 
     act(() => { h.set({ hasMore: false }) })
@@ -2145,14 +2095,6 @@ describe('ChatView', () => {
     expect(rowRenders).toBe(afterMount)
   })
 
-  it('updates the selected call id handed to the Tool seat', () => {
-    const h = makeHarness({ nodes: [toolResult(3, 'a')] })
-    render(<h.ChatView {...h.props} />)
-    expect(h.toolOwners.at(-1)?.selectedCallId).toBeUndefined()
-    act(() => { h.setSelection({ turnSeq: 3, callId: 'a', toolName: 'bash' }) })
-    expect(h.toolOwners.at(-1)?.selectedCallId).toBe('a')
-  })
-
   it('hands running calls to a live Tool group', () => {
     const h = makeHarness({ runningCalls: [runningCall('r1')] }, { running: true })
     const view = render(<h.ChatView {...h.props} />)
@@ -2245,7 +2187,7 @@ describe('ChatView', () => {
     expect(calls).toHaveLength(1)
     expect(calls[0]).toMatchObject({
       key: 'conversation.chat.node',
-      owner: { node: { kind: 'tool-call' }, selectedCallId: undefined },
+      owner: { node: { kind: 'tool-call' } },
       entryKey: 'tool-call',
     })
     const owner = calls[0]?.owner as RoutedChatNodeOwner
@@ -2302,18 +2244,6 @@ describe('ChatView', () => {
     await act(async () => { h.toolOwners[0]!.openFile('empty.ts') })
     await waitFor(() => {
       expect(screen.getByRole('dialog', { name: '无法打开文件' }).textContent).toContain('无法打开此文件')
-    })
-  })
-
-  it('names a workspace-folder Host refusal as a folder', async () => {
-    const openFile = vi.fn<(path: string) => Promise<void>>()
-      .mockRejectedValueOnce(new Error(''))
-    const h = makeHarness({ nodes: [toolResult(3, 'a')] })
-    h.props.openFile = openFile
-    render(<h.ChatView {...h.props} />)
-    await act(async () => { h.toolOwners[0]!.openFile('.') })
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: '无法打开文件夹' }).textContent).toContain('无法打开此文件夹')
     })
   })
 
@@ -2447,6 +2377,162 @@ describe('ChatView', () => {
     metrics.setHeight(1_200)
     act(() => { h.setSession({ running: true }) })
     expect(scroller.scrollTop).toBe(900)
+  })
+
+  it('keeps following when a shrink clamp regrows before scrollend', () => {
+    const h = makeHarness({ nodes: [user(1, 'q'), assistant(2, 'a')] })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    const metrics = installScrollMetrics(scroller, 1_000, 300)
+    scroller.scrollTop = 700
+    fireEvent.scroll(scroller)
+    fireEvent(scroller, new Event('scrollend'))
+
+    metrics.setLayout(800, 700)
+    fireEvent.scroll(scroller)
+    metrics.setHeight(962)
+    act(() => { h.setSession({ running: true }) })
+    fireEvent(scroller, new Event('scrollend'))
+
+    expect(scroller.scrollTop).toBe(662)
+    expect(view.queryByLabelText('回到底部')).toBeNull()
+    expect(h.chatScroll.read()).toBeNull()
+  })
+
+  it('settles pinned deliveries before observer growth without reading row geometry', () => {
+    let notify: (() => void) | undefined
+    class ResizeObserverStub {
+      constructor(callback: ResizeObserverCallback) {
+        notify = () => { callback([], this as unknown as ResizeObserver) }
+      }
+
+      observe = vi.fn()
+      disconnect = vi.fn()
+    }
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub)
+    const h = makeHarness({ nodes: [user(1, 'q'), assistant(2, 'a')] })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    const metrics = installScrollMetrics(scroller, 9_931, 300)
+    expect(notify).toBeDefined()
+    scroller.scrollTop = 9_631
+    fireEvent.scroll(scroller)
+    fireEvent(scroller, new Event('scrollend'))
+    const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+    rect.mockClear()
+    try {
+      metrics.setLayout(9_918, 9_631)
+      fireEvent.scroll(scroller)
+      metrics.setHeight(10_013)
+      act(() => { notify?.() })
+      expect(scroller.scrollTop).toBe(9_713)
+      fireEvent.scroll(scroller)
+      metrics.setHeight(10_093)
+      act(() => { notify?.() })
+      expect(scroller.scrollTop).toBe(9_793)
+      expect(rect).not.toHaveBeenCalled()
+      expect(h.chatScroll.read()).toBeNull()
+    } finally {
+      rect.mockRestore()
+    }
+  })
+
+  it('lets small reader movements accumulate past the follow threshold during growth', () => {
+    let notify: (() => void) | undefined
+    class ResizeObserverStub {
+      constructor(callback: ResizeObserverCallback) {
+        notify = () => { callback([], this as unknown as ResizeObserver) }
+      }
+
+      observe = vi.fn()
+      disconnect = vi.fn()
+    }
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub)
+    const h = makeHarness({ nodes: [user(1, 'q'), assistant(2, 'a')] })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    const metrics = installScrollMetrics(scroller, 1_000, 300)
+    expect(notify).toBeDefined()
+    scroller.scrollTop = 700
+    fireEvent.scroll(scroller)
+    fireEvent(scroller, new Event('scrollend'))
+    scroller.scrollTop = 690
+    fireEvent.scroll(scroller)
+    metrics.setHeight(1_020)
+    act(() => { notify?.() })
+    expect(scroller.scrollTop).toBe(690)
+    scroller.scrollTop = 680
+    fireEvent.scroll(scroller)
+    fireEvent(scroller, new Event('scrollend'))
+    expect(view.getByLabelText('回到底部')).toBeTruthy()
+    metrics.setHeight(1_040)
+    act(() => { notify?.() })
+    expect(scroller.scrollTop).toBe(680)
+  })
+
+  it('clears an away sample when a back-to-bottom delivery restores pinned ownership', () => {
+    const h = makeHarness({ nodes: [user(1, 'q'), assistant(2, 'a')] })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    const metrics = installScrollMetrics(scroller, 1_000, 300)
+    scroller.scrollTop = 700
+    fireEvent.scroll(scroller)
+    scroller.scrollTop = 500
+    fireEvent.scroll(scroller)
+    fireEvent(scroller, new Event('scrollend'))
+    scroller.scrollTop = 400
+    fireEvent.scroll(scroller)
+    fireEvent.click(view.getByLabelText('回到底部'))
+    fireEvent.scroll(scroller)
+    metrics.setHeight(1_200)
+    act(() => { h.setSession({ running: true }) })
+    expect(scroller.scrollTop).toBe(900)
+    expect(h.chatScroll.read()).toBeNull()
+  })
+
+  it('samples away-reader geometry on the interval or scrollend and cancels it on unmount', () => {
+    vi.useFakeTimers()
+    try {
+      const h = makeHarness({ nodes: [user(1, 'q'), assistant(2, 'a')] })
+      const view = render(<h.ChatView {...h.props} />)
+      const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+      installScrollMetrics(scroller, 1_000, 300)
+      scroller.scrollTop = 700
+      fireEvent.scroll(scroller)
+      scroller.scrollTop = 500
+      fireEvent.scroll(scroller)
+      fireEvent(scroller, new Event('scrollend'))
+      expect(view.getByLabelText('回到底部')).toBeTruthy()
+      const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      try {
+        act(() => { vi.advanceTimersByTime(500) })
+        rect.mockClear()
+        scroller.scrollTop = 400
+        fireEvent.scroll(scroller)
+        scroller.scrollTop = 300
+        fireEvent.scroll(scroller)
+        act(() => { vi.advanceTimersByTime(499) })
+        expect(rect).not.toHaveBeenCalled()
+        act(() => { vi.advanceTimersByTime(1) })
+        expect(rect).toHaveBeenCalled()
+        rect.mockClear()
+        scroller.scrollTop = 200
+        fireEvent.scroll(scroller)
+        expect(rect).not.toHaveBeenCalled()
+        fireEvent(scroller, new Event('scrollend'))
+        expect(rect).toHaveBeenCalled()
+        scroller.scrollTop = 100
+        fireEvent.scroll(scroller)
+        view.unmount()
+        rect.mockClear()
+        act(() => { vi.advanceTimersByTime(500) })
+        expect(rect).not.toHaveBeenCalled()
+      } finally {
+        rect.mockRestore()
+      }
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('uses the last delivered top when compositor scrolling precedes scroll delivery', () => {

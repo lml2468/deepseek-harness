@@ -41,7 +41,8 @@ async function bench() {
       ? chatSettings.scope
       : stubSettingsScope().scope,
   } as never)
-  runtime.ctx.provide('layout', { openDetails: vi.fn(), closeDetails: vi.fn() } as never)
+  runtime.ctx.provide('layout', { openRightbar: vi.fn(), closeRightbar: vi.fn() } as never)
+  runtime.ctx.provide('sidebarRight', { openResource: vi.fn() } as never)
   runtime.ctx.provide('uiWorkspace', {
     connectWorkspace: vi.fn(async () => SID),
   } as never)
@@ -53,7 +54,6 @@ async function bench() {
   runtime.slots.installLocale(locale)
   await runtime.root.declare({
     'conversation': { kind: 'single', scope: 'session-maybe' },
-    'details': { kind: 'single', scope: 'session' },
     'conversation.approval.detail': { kind: 'single', scope: 'session' },
     'settings.general.item': { kind: 'list', scope: 'root' },
   }, (_props: { renderSlot?: unknown }) => null)
@@ -68,28 +68,22 @@ async function bench() {
   return { runtime, conversation, chat, chatSettings, sourceDescriptor }
 }
 
-function storeOf(runtime: SlotTestRuntime, key: 'conversation.session' | 'conversation.session.header' | 'conversation.view' | 'details') {
+function storeOf(runtime: SlotTestRuntime, key: 'conversation.session' | 'conversation.session.header' | 'conversation.view') {
   return (runtime.slots.entries(key)[0] as { store?: unknown } | undefined)?.store
 }
 
 describe('Chat apply wiring', () => {
-  it('contributes Chat View, node renderers, and details without a duplicate session statistics dock', async () => {
+  it('contributes Chat View, node renderers, and stats', async () => {
     const b = await bench()
     const views = b.runtime.slots.entries('conversation.view')
     expect(views.map(row => row.options.id)).toEqual(['chat'])
     expect(resolveSlotLabel(views[0]?.options.label)).toBe('对话')
     expect(b.runtime.slots.spec('conversation.chat.node'))
       .toMatchObject({ kind: 'keyed', scope: 'session' })
-    expect(b.runtime.slots.entries('conversation.composer.dock')).toHaveLength(0)
-    expect(b.runtime.slots.entries('conversation.session.header.utilities').map(row => row.options.id))
-      .toEqual(['workbench'])
+    expect(b.runtime.slots.entries('conversation.composer.dock').map(row => row.options.id))
+      .toEqual(['stats'])
     expect(b.runtime.slots.entries('settings.general.item').map(row => row.options.id))
       .toEqual(['transcript-view', 'composer-enter'])
-    expect(b.runtime.slots.entries('details')).toHaveLength(1)
-    expect(b.runtime.slots.entries('conversation.details.view').map(row => ({
-      id: row.options.id,
-      launchable: resolveSlotLabel(row.options.label) !== undefined,
-    }))).toContainEqual({ id: 'tool', launchable: false })
     await b.runtime.dispose()
   })
 
@@ -116,7 +110,6 @@ describe('Chat apply wiring', () => {
     const conversationStore = storeOf(b.runtime, 'conversation.session')
     const chatStore = storeOf(b.runtime, 'conversation.view')
     expect(storeOf(b.runtime, 'conversation.session.header')).toBe(conversationStore)
-    expect(storeOf(b.runtime, 'details')).not.toBe(chatStore)
     expect(chatStore).toBeDefined()
     expect(chatStore).not.toBe(conversationStore)
     await b.runtime.dispose()

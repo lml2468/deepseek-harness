@@ -1,12 +1,14 @@
-/** Register the Chat Conversation target, renderers, and details surface. */
+/** Register the Chat Conversation target, renderers, stats, and details surface. */
 import type { Context } from '@deepseek-ai/cordis'
 import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type { SessionBinding } from '@deepseek-ai/dsh-api-session-controller/client'
-import { createSnapshotStore, type BoundActions, type ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
+import type { ObservableSnapshot } from '@deepseek-ai/dsh-client-store'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import { resolveWorkspacePath } from '@deepseek-ai/dsh-util-workspace-path'
+import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
+// The `file` entry of `SidebarRightResourceParamsMap`, which types `{ params: { line } }` below.
+import type {} from '@deepseek-ai/dsh-client-ui-sidebar-textpreview/client'
+import { fileAddressFor } from '@deepseek-ai/dsh-util-workspace-path'
 // Type-only service and declaration merges used by the apply world.
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -16,7 +18,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type {
-  ChatNodeTurnDataInjected, ChatScrollPosition, ChatViewInjected, DetailsInjected, DetailsViewTab,
+  ChatNodeTurnDataInjected, ChatScrollPosition, ChatViewInjected,
   TurnTailOwnerProps,
 } from './contract/slots.ts'
 import type { ChatSnapshot } from './contract/snapshot.ts'
@@ -24,10 +26,8 @@ import { EMPTY_CHAT_SNAPSHOT } from './contract/snapshot.ts'
 import { ApprovalCommand } from './chat/ApprovalCommand.tsx'
 import { ChatView } from './chat/ChatView.tsx'
 import { registerChatNodeRenderers } from './chat/register-node-renderers.ts'
+import { StatsLine } from './chat/StatsLine.tsx'
 import { registerConversationNodes } from './conversation-nodes/register.ts'
-import { DetailsLauncher, DetailsPanel, ToolDetailsView } from './details/DetailsPanel.tsx'
-import { ConversationDetailsController } from './details/controller.ts'
-import { createConversationWorkbenchStore } from './details/workbench-store.ts'
 import { en, NS, zh } from './locale.ts'
 import { TranscriptViewRow, type TranscriptViewRowInjected } from './settings/TranscriptViewRow.tsx'
 import { createChatStore } from './stores.ts'
@@ -45,8 +45,8 @@ const CHAT_NODE_INJECT: ChatNodeTurnDataInjected = {
 
 /** Services required by the Chat target and its presentation registrations. */
 export const inject = [
-  'slots', 'sessions', 'uiSession', 'uiConversation', 'layout', 'locale',
-  'settingsScope', 'remote', 'remote.session',
+  'slots', 'sessions', 'uiSession', 'uiConversation', 'locale',
+  'settingsScope', 'remote', 'remote.session', 'sidebarRight',
 ]
 
 /**
@@ -77,61 +77,6 @@ export function apply(ctx: Context): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-chat: dictionaries')
   const t = ctx.locale.bind(NS)
   const chatStore = createChatStore()
-  const detailsViewTabs = (): DetailsViewTab[] => {
-    const tabs: DetailsViewTab[] = []
-    for (const entry of ctx.slots.entries('conversation.details.view')) {
-      if (entry.options.id === undefined) continue
-      const label = resolveSlotLabel(entry.options.label)
-      tabs.push({
-        id: entry.options.id,
-        label: label ?? entry.options.id,
-        launchable: label !== undefined,
-      })
-    }
-    return tabs
-  }
-  const detailsViews = createSnapshotStore<readonly DetailsViewTab[]>(detailsViewTabs())
-  const workbenchStoreBase = createConversationWorkbenchStore()
-  const detailsController = new ConversationDetailsController(
-    ctx.sessions,
-    ctx.layout,
-    detailsViewTabs,
-    workbenchStoreBase,
-  )
-  const workbenchStore: typeof workbenchStoreBase = {
-    spec: workbenchStoreBase.spec,
-    create: (scopeKey?: string) => {
-      if (scopeKey === undefined) throw new Error('ui-chat: Workbench store requires a Session scope')
-      const sessionId = scopeKey as SessionId
-      const instance = detailsController.mount(sessionId)
-      return {
-        actions: instance.actions,
-        getSnapshot: () => instance.getSnapshot(),
-        subscribe: listener => instance.subscribe(listener),
-        store: instance.store,
-        clearPersisted: () => {
-          detailsController.detach(sessionId, instance)
-          instance.clearPersisted()
-        },
-      }
-    },
-  }
-  ctx.effect(() => {
-    const disposeService = ctx.reflect.provide('conversationDetails', detailsController)
-    const refresh = () => {
-      const tabs = detailsViewTabs()
-      detailsViews.set(tabs)
-      detailsController.reconcileViews(tabs.map(view => view.id))
-    }
-    const disposeSlots = ctx.slots.subscribe('conversation.details.view', refresh)
-    const disposeLocale = ctx.locale.subscribe(refresh)
-    return () => {
-      disposeLocale()
-      disposeSlots()
-      detailsController.dispose()
-      void disposeService()
-    }
-  }, 'ui-chat: conversation details controller')
   const chatScrollPositions = new Map<SessionId, ChatScrollPosition>()
   const transcriptView = new TranscriptViewPolicy(
     ctx.settingsScope.bind<ChatSettings>({ namespace: CHAT_SETTINGS_NAMESPACE }),
@@ -140,8 +85,7 @@ export function apply(ctx: Context): void {
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
     id: 'transcript-view',
-    order: 20,
-    label: () => t('settings.group.conversation'),
+    order: 12,
     locale: NS,
     inject: (): TranscriptViewRowInjected => ({
       hooks: { transcriptView: transcriptView.mode },
@@ -161,7 +105,7 @@ export function apply(ctx: Context): void {
         'conversation.message.images': { kind: 'single', scope: 'session' },
       },
       store: chatStore,
-      inject: (sessionId: SessionId, actions: BoundActions<typeof chatStore>): ChatViewInjected => {
+      inject: (sessionId: SessionId): ChatViewInjected => {
         const binding = ctx.sessions.binding(sessionId)
         if (binding === undefined) throw new Error(`ui-chat: unknown session "${sessionId}"`)
         const session = binding.session
@@ -172,24 +116,25 @@ export function apply(ctx: Context): void {
             chatNode: key => chat.getSnapshot().nodes.source(key),
             chatNodeProcess: key => chat.getSnapshot().nodes.processSource(key),
           },
-          openDetails: (target) => {
-            actions.select(target)
-            detailsController.openTabFor(sessionId, {
-              id: 'tool',
-              viewId: 'tool',
-              title: t('details.tool'),
-              state: null,
-              closable: true,
-            }, target.callId)
-          },
           fileMentions: (owner: TurnTailOwnerProps) => ctx.get('chatFileMentions')?.forClosing(owner),
-          openFile: async (path) => {
+          // Files open in the right Sidebar, not in a desktop application: the
+          // content stays in the product, beside the conversation that produced
+          // it. A relative path, or an absolute one inside the session's
+          // workspace, is addressed under this session's scope,
+          // `dsh-resource://file/session/<id>/<relative path>`; an absolute path
+          // elsewhere is addressed as `dsh-resource://file/absolute/<path>` and
+          // read through the session on screen. Which tab type claims the
+          // address is the Sidebar's decision, not this call site's.
+          // A line travels as a navigation parameter, not as part of the
+          // address: the file is one piece of content whether it is opened at
+          // its top or at line 400, so the same tab is revealed and told where
+          // to land.
+          openFile: async (path, options) => {
             const cwd = ctx.sessions.list.getSnapshot().byId[sessionId]?.cwd
-            if (await detailsController.openWorkspacePath({ sessionId, path, workspaceRoot: cwd ?? null })) return
-            const result = await ctx.remote.session.openWorkspacePath({
-              path: resolveWorkspacePath(cwd, path),
-            })
-            if (!result.ok) throw new Error(`path open failed: ${result.error.message}`)
+            const url = fileAddressFor(sessionId, cwd, path)
+            if (options?.line === undefined) ctx.sidebarRight.openResource(url)
+            else ctx.sidebarRight.openResource(url, { params: { line: options.line } })
+            await Promise.resolve()
           },
           loadOlder: () => { void session.loadOlder() },
           loadThrough: seq => session.loadThrough(seq),
@@ -217,45 +162,12 @@ export function apply(ctx: Context): void {
     return disposeView
   })
 
+  ctx.slots.inject('conversation.composer.dock', () =>
+    ctx.slots.register({
+      name: 'conversation.composer.dock', id: 'stats', order: 0, locale: NS,
+    }, StatsLine))
+
   ctx.slots.inject('conversation.approval.detail', () =>
     ctx.slots.register({ name: 'conversation.approval.detail' }, ApprovalCommand))
 
-  ctx.slots.inject('details', () => ctx.slots.register({
-    name: 'details',
-    locale: NS,
-    children: { 'conversation.details.view': { kind: 'list', scope: 'session' } },
-    store: workbenchStore,
-    inject: (sessionId: SessionId): DetailsInjected => ({
-      workbench: detailsController,
-      hooks: { detailsViews },
-      closeDetails: () => { detailsController.close() },
-      openDetailsView: (viewId) => { detailsController.openFor(sessionId, viewId) },
-    }),
-  }, DetailsPanel))
-
-  ctx.slots.inject('conversation.session.header.utilities', () => ctx.slots.register({
-    name: 'conversation.session.header.utilities',
-    id: 'workbench',
-    order: 0,
-    locale: NS,
-    inject: () => ({
-      hooks: { detailsViews },
-      openDetails: () => {
-        const first = detailsViews.getSnapshot().find(view => view.launchable)
-        const snapshot = detailsController.getSnapshot()
-        const active = snapshot.tabs.find(tab => tab.id === snapshot.activeTabId)
-        if (active !== undefined) detailsController.openTab(active)
-        else if (first !== undefined) detailsController.open(first.id)
-      },
-    }),
-  }, DetailsLauncher))
-
-  ctx.slots.inject('conversation.details.view', () => ctx.slots.register({
-    name: 'conversation.details.view',
-    id: 'tool',
-    order: 0,
-    locale: NS,
-    children: { 'conversation.details.tool': { kind: 'single', scope: 'session' } },
-    store: chatStore,
-  }, ToolDetailsView))
 }
