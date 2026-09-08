@@ -40,6 +40,7 @@ export type { TranscriptViewMode } from '../chat-settings.ts'
 export type {
   AssistantActionOwnerProps, ChatFileMentions, ChatNodeOwnerProps, ChatNodeTurnDataInjected,
   ChatNodeViewProps, ChatScrollPosition, ChatStore, ChatViewInjected, ChatViewSlotProps,
+  ChatWorkspacePathOpener, ChatWorkspacePathOpenRequest,
   CommandRowOwnerProps, CommandRowProps, DetailsInjected, DetailsSlotProps,
   DetailsToolOwnerProps, DetailsViewOwnerProps, DetailsViewTab, MessageImagesProps, ToolDetailsViewProps,
   TurnErrorActionOwnerProps, TurnHeaderOwnerProps, TurnProcessOwnerProps, TurnTailOwnerProps,

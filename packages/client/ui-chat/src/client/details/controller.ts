@@ -3,7 +3,9 @@ import type { EngineStoreInstance, ObservableSnapshot } from '@deepseek-ai/dsh-c
 import type { ILayout } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { isJsonValue } from '@deepseek-ai/dsh-util-values'
-import type { DetailsViewTab } from '../contract/slots.ts'
+import type {
+  ChatWorkspacePathOpener, ChatWorkspacePathOpenRequest, DetailsViewTab,
+} from '../contract/slots.ts'
 import {
   createConversationWorkbenchStore,
   decodeConversationWorkbenchState,
@@ -54,6 +56,19 @@ export interface IConversationDetailsController extends ObservableSnapshot<Conve
    * @param focus - Optional process-local focus target.
    */
   openTab(tab: ConversationWorkbenchTab, focus?: string): void
+  /**
+   * Open or activate a caller-addressed Workbench tab for one Session.
+   * @param sessionId - Session that owns the tab.
+   * @param tab - Tab identity and persisted presentation state.
+   * @param focus - Optional process-local focus target.
+   */
+  openTabFor(sessionId: SessionId, tab: ConversationWorkbenchTab, focus?: string): void
+  /**
+   * Register the product handler for Workspace paths selected in Chat.
+   * @param opener - Product-owned Workspace path handler.
+   * @returns A disposer that removes this exact handler.
+   */
+  registerWorkspacePathOpener(opener: ChatWorkspacePathOpener): () => void
   /**
    * Activate an open tab in the current Session.
    * @param tabId - Open tab identifier.
@@ -106,6 +121,7 @@ export class ConversationDetailsController implements IConversationDetailsContro
   readonly #attached = new Map<SessionId, AttachedDetails>()
   readonly #focus = new Map<SessionId, string | null>()
   readonly #listeners = new Set<() => void>()
+  #workspacePathOpener: ChatWorkspacePathOpener | undefined
   readonly #unsubscribeSessions: () => void
   #snapshot = EMPTY_SNAPSHOT
 
@@ -220,6 +236,20 @@ export class ConversationDetailsController implements IConversationDetailsContro
     this.layout.openDetails()
   }
 
+  registerWorkspacePathOpener(opener: ChatWorkspacePathOpener): () => void {
+    if (this.#workspacePathOpener !== undefined) {
+      throw new Error('conversation details: a Workspace path opener is already registered')
+    }
+    this.#workspacePathOpener = opener
+    return () => {
+      if (this.#workspacePathOpener === opener) this.#workspacePathOpener = undefined
+    }
+  }
+
+  async openWorkspacePath(request: ChatWorkspacePathOpenRequest): Promise<boolean> {
+    return await this.#workspacePathOpener?.open(request) ?? false
+  }
+
   /**
    * Open the singleton View for an already-addressed mounted Session callback.
    * @param sessionId - Session that owns the View.
@@ -304,6 +334,7 @@ export class ConversationDetailsController implements IConversationDetailsContro
     this.#attached.clear()
     this.#focus.clear()
     this.#listeners.clear()
+    this.#workspacePathOpener = undefined
     this.#snapshot = EMPTY_SNAPSHOT
   }
 
