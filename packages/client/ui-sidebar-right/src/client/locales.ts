@@ -8,6 +8,7 @@
 
 /** Simplified Chinese dictionary and key-set source of truth. */
 export const zh = {
+  'chrome.label': '侧栏',
   'chrome.expand': '展开侧栏',
   'chrome.collapse': '收起侧栏',
   'chrome.toFullscreen': '全屏显示侧栏',
@@ -31,6 +32,7 @@ export type SidebarRightKey = keyof typeof zh
 
 /** English dictionary, checked against the Chinese key set. */
 export const en = {
+  'chrome.label': 'Sidebar',
   'chrome.expand': 'Open the sidebar',
   'chrome.collapse': 'Close the sidebar',
   'chrome.toFullscreen': 'Show the sidebar fullscreen',

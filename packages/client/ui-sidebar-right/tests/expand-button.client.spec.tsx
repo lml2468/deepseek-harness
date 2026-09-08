@@ -47,6 +47,7 @@ describe('ExpandButton', () => {
     const button = control()
     if (button === null) throw new Error('expected the expand control')
     expect(button.getAttribute('aria-label')).toBe('chrome.expand')
+    expect(button.textContent).toBe('chrome.label')
     expect(placeholder()).toBeNull()
     fireEvent.click(button)
     expect(instance.getSnapshot().bySession[SESSION]?.layout.expanded).toBe(true)

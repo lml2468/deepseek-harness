@@ -11,8 +11,8 @@
  * panel's per-session store, which the slot runtime allows because both seats
  * are session-scoped.
  *
- * The glyph is the left sidebar's collapse icon mirrored: the same affordance,
- * on the other edge.
+ * The glyph is the left sidebar's collapse icon mirrored. A short visible label
+ * keeps the affordance discoverable among the conversation header utilities.
  */
 import type { ReactNode } from 'react'
 import { IconPanelLeftOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -43,6 +43,7 @@ export function ExpandButton({ sessionId, useStore, actions, t }: ExpandButtonPr
       onClick={() => { actions.setExpanded(sessionId, true) }}
     >
       <IconPanelLeftOutline16 className={css.icon} />
+      <span>{t('chrome.label')}</span>
     </button>
   )
 }
