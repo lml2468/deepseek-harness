@@ -165,6 +165,12 @@ let rgPathPromise: Promise<string> | undefined
  * at the call boundary keeps a missing or corrupt binary at the first search
  * call as `SEARCH_FAILED`, rather than failing the Loader composition.
  *
+ * Electron is the same hazard one layer down: `@vscode/ripgrep` resolves the
+ * platform package to a path inside `app.asar`, where the patched `fs` reports
+ * the binary present but `execve` cannot descend into an archive that is really
+ * a single file (spawn fails `ENOTDIR`). The unpacked twin is the executable
+ * copy, so prefer it whenever the packager left one there.
+ *
  * @returns the packaged binary's absolute path; the memoized promise rejects
  *   when the platform package cannot be resolved.
  */
@@ -175,7 +181,9 @@ export function resolveRgPath(): Promise<string> {
       ? join(executable.dir, `${executable.name}-rg.exe`)
       : `${process.execPath}-rg`
     if ('pkg' in process && existsSync(executableSidecar)) return executableSidecar
-    return (await import('@vscode/ripgrep')).rgPath
+    const resolved = (await import('@vscode/ripgrep')).rgPath
+    const unpacked = resolved.replace(`${sep}app.asar${sep}`, `${sep}app.asar.unpacked${sep}`)
+    return unpacked !== resolved && existsSync(unpacked) ? unpacked : resolved
   })
   return rgPathPromise
 }
