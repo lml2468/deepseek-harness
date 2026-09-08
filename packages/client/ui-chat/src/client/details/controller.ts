@@ -42,17 +42,39 @@ const EMPTY_SNAPSHOT: ConversationWorkbenchSnapshot = {
 /** Public controller for the current Session's right-hand Workbench. */
 export interface IConversationDetailsController extends ObservableSnapshot<ConversationWorkbenchSnapshot> {
   readonly activeViewId: string | null
-  /** Open or activate the singleton tab for one registered View. */
+  /**
+   * Open or activate the singleton tab for one registered View.
+   * @param viewId - Registered View identifier.
+   * @param focus - Optional process-local focus target.
+   */
   open(viewId: string, focus?: string): void
-  /** Open or activate a caller-addressed Workbench tab. */
+  /**
+   * Open or activate a caller-addressed Workbench tab.
+   * @param tab - Tab identity and persisted presentation state.
+   * @param focus - Optional process-local focus target.
+   */
   openTab(tab: ConversationWorkbenchTab, focus?: string): void
-  /** Activate an open tab in the current Session. */
+  /**
+   * Activate an open tab in the current Session.
+   * @param tabId - Open tab identifier.
+   */
   activateTab(tabId: string): void
-  /** Update one open tab's title or JSON presentation state. */
+  /**
+   * Update one open tab's title or JSON presentation state.
+   * @param tabId - Open tab identifier.
+   * @param patch - Title or JSON state fields to replace.
+   */
   updateTab(tabId: string, patch: Partial<Pick<ConversationWorkbenchTab, 'title' | 'state'>>): void
-  /** Move one open tab to a zero-based position. */
+  /**
+   * Move one open tab to a zero-based position.
+   * @param tabId - Open tab identifier.
+   * @param targetIndex - Destination index in the tab strip.
+   */
   moveTab(tabId: string, targetIndex: number): void
-  /** Close one open tab. */
+  /**
+   * Close one open tab.
+   * @param tabId - Open tab identifier.
+   */
   closeTab(tabId: string): void
   /** Clear the active View's process-local focus request. */
   completeFocus(): void
@@ -108,7 +130,11 @@ export class ConversationDetailsController implements IConversationDetailsContro
     return () => { this.#listeners.delete(listener) }
   }
 
-  /** Attach the framework-created store for one mounted Session scope. */
+  /**
+   * Attach the framework-created store for one mounted Session scope.
+   * @param sessionId - Session that owns the store.
+   * @param store - Framework-created Workbench store instance.
+   */
   attach(sessionId: SessionId, store: WorkbenchInstance): void {
     const previous = this.#attached.get(sessionId)
     if (previous?.store === store) return
@@ -134,7 +160,11 @@ export class ConversationDetailsController implements IConversationDetailsContro
     })
   }
 
-  /** Resolve the one store instance shared by controller calls and the Slot renderer. */
+  /**
+   * Resolve the one store instance shared by controller calls and the Slot renderer.
+   * @param sessionId - Session whose Workbench store is required.
+   * @returns The mounted or newly created Workbench store.
+   */
   mount(sessionId: SessionId): WorkbenchInstance {
     const attached = this.#attached.get(sessionId)
     if (attached !== undefined) return attached.store
@@ -146,7 +176,11 @@ export class ConversationDetailsController implements IConversationDetailsContro
     return store
   }
 
-  /** Detach a framework-destroyed Session store instance. */
+  /**
+   * Detach a framework-destroyed Session store instance.
+   * @param sessionId - Session that owned the store.
+   * @param store - Store instance being destroyed.
+   */
   detach(sessionId: SessionId, store: WorkbenchInstance): void {
     const attached = this.#attached.get(sessionId)
     if (attached?.store !== store) return
@@ -166,7 +200,12 @@ export class ConversationDetailsController implements IConversationDetailsContro
     this.openTabFor(this.#currentSessionId(), tab, focus)
   }
 
-  /** Open a tab for an already-addressed mounted Session callback. */
+  /**
+   * Open a tab for an already-addressed mounted Session callback.
+   * @param sessionId - Session that owns the tab.
+   * @param tab - Tab identity and persisted presentation state.
+   * @param focus - Optional process-local focus target.
+   */
   openTabFor(sessionId: SessionId, tab: ConversationWorkbenchTab, focus?: string): void {
     assertTab(tab)
     this.#view(tab.viewId)
@@ -181,7 +220,12 @@ export class ConversationDetailsController implements IConversationDetailsContro
     this.layout.openDetails()
   }
 
-  /** Open the singleton View for an already-addressed mounted Session callback. */
+  /**
+   * Open the singleton View for an already-addressed mounted Session callback.
+   * @param sessionId - Session that owns the View.
+   * @param viewId - Registered launchable View identifier.
+   * @param focus - Optional process-local focus target.
+   */
   openFor(sessionId: SessionId, viewId: string, focus?: string): void {
     const view = this.#view(viewId)
     if (!view.launchable) throw new Error(`conversation details: View "${viewId}" is resource-only`)
@@ -231,7 +275,10 @@ export class ConversationDetailsController implements IConversationDetailsContro
     this.#publish()
   }
 
-  /** Remove tabs whose View plugin has unloaded. */
+  /**
+   * Remove tabs whose View plugin has unloaded.
+   * @param viewIds - Registered View identifiers that remain available.
+   */
   reconcileViews(viewIds: readonly string[]): void {
     const available = new Set(viewIds)
     const currentId = this.sessions.list.getSnapshot().current

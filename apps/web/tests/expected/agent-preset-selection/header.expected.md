@@ -10,5 +10,3 @@
   - img
 - button "Session log":
   - img
-- button "Open task details":
-  - img

@@ -204,7 +204,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.chat.assistant-actions\', () => ctx.slots.register(\n      { name: \'conversation.chat.assistant-actions\', id: \'my-entry\', order: 100, label: \'My entry\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:273',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:286',
   },
   {
     key: 'conversation.chat.commandview',
@@ -249,7 +249,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     occupants: [],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.chat.commandview\', () => ctx.slots.register(\n      { name: \'conversation.chat.commandview\', key: \'<one key the owner dispatches>\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:261',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:274',
   },
   {
     key: 'conversation.chat.node',
@@ -314,7 +314,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.chat.node\', () => ctx.slots.register(\n      { name: \'conversation.chat.node\', key: \'<one key the owner dispatches>\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:242',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:255',
   },
   {
     key: 'conversation.chat.turnHeader',
@@ -350,7 +350,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     occupants: [],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.chat.turnHeader\', () => ctx.slots.register(\n      { name: \'conversation.chat.turnHeader\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:275',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:288',
   },
   {
     key: 'conversation.chat.turnTail',
@@ -395,7 +395,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.chat.turnTail\', () => ctx.slots.register(\n      { name: \'conversation.chat.turnTail\', select: owner => null },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:267',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:280',
   },
   {
     key: 'conversation.composer',
@@ -567,7 +567,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.details.tool\', () => ctx.slots.register(\n      { name: \'conversation.details.tool\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:283',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:296',
   },
   {
     key: 'conversation.details.view',
@@ -596,9 +596,11 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
       },
     ],
     ownerProps: [
-      '/** Owner state addressed to the active Workbench View. */\nexport interface DetailsViewOwnerProps {\n  focus: string | null\n  completeFocus(): void\n}',
+      '/** Owner state addressed to the active Workbench View. */\nexport interface DetailsViewOwnerProps {\n  /** The active persisted tab instance addressed to this View. */\n  tab: Readonly<ConversationWorkbenchTab>\n  /** True while this instance owns the visible Workbench body. */\n  active: boolean\n  focus: string | null\n  /** Replace this tab\'s JSON presentation state. */\n  updateState(state: ConversationWorkbenchTab[\'state\']): void\n  /** Close this tab instance. */\n  closeTab(): void\n  completeFocus(): void\n}',
     ],
-    ownerPropsReferences: [],
+    ownerPropsReferences: [
+      'ConversationWorkbenchTab',
+    ],
     standardProps: [
       'useWorkspaces: SnapshotSelectorHook<WorkspaceSnapshot>',
       'useSessions: UseSessions',
@@ -622,7 +624,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.details.view\', () => ctx.slots.register(\n      { name: \'conversation.details.view\', id: \'my-entry\', order: 100, label: \'My entry\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:236',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:249',
   },
   {
     key: 'conversation.hero.agentPreset',
@@ -1282,7 +1284,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     ],
     replaceRisk: 'shadows-shipped-ui',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.message.images\', () => ctx.slots.register(\n      { name: \'conversation.message.images\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:255',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:268',
   },
   {
     key: 'conversation.session',
@@ -1597,7 +1599,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     occupants: [],
     replaceRisk: 'none',
     example: 'return {\n  inject: [\'slots\'],\n  apply(ctx) {\n    ctx.slots.inject(\'conversation.turn.error.actions\', () => ctx.slots.register(\n      { name: \'conversation.turn.error.actions\', id: \'my-entry\', order: 100, label: \'My entry\' },\n      () => React.createElement(\'div\', null, \'hello\'),\n    ))\n  },\n}',
-    source: 'packages/client/ui-chat/src/client/contract/slots.ts:277',
+    source: 'packages/client/ui-chat/src/client/contract/slots.ts:290',
   },
   {
     key: 'conversation.view',
