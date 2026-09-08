@@ -27,7 +27,7 @@ Conversation 组装的浏览器 Chat target。本包注册 Chat event definition
 <a id="workbench-views"></a>
 ## Workbench 视图
 
-Session 级 `conversation.details.view` 列表可以增加右侧 Workbench 视图而不替换 Chat。`ctx.conversationDetails.open(viewId, focus?)` 为当前已挂载 Session 选择一个已注册视图，并打开由 layout 持有的详情栏；视图接收可选 focus 字符串，并通过 `completeFocus()` 确认消费。统一的 header utility 会打开当前活动 view 或首个已注册 view，因此产品 view 不需要重复提供 header action。Workbench header 只显示当前 view，并将其他选项收入同一个选择菜单。内置 `tool` view 持有官方 Tool 详情。活动注册被移除时选择剩余的第一个 view；没有 view 时关闭详情栏。
+Session 级 `conversation.details.view` 列表可以增加右侧 Workbench 视图而不替换 Chat。`ctx.conversationDetails` 可打开 singleton 或由调用方寻址的 resource tab，并可激活、更新、排序和关闭 tab，同时为外部控件暴露一个稳定的可观察 snapshot。持久化的 `dsh.conversation.workbench.v1` store 只包含 tab 身份、View 身份、标题、JSON 展示状态和活动 tab；focus 请求仅存在于当前进程中，每个 Session 使用隔离的 store。关闭栏只会隐藏它而不销毁 tab，关闭最后一个 tab 时也会隐藏栏。tab strip 支持键盘导航、拖动排序、溢出选择，以及用于打开已注册 singleton View 的添加菜单。未声明 label 的 View 仅用于 resource tab：调用方可通过 `openTab()` 打开，但它不会出现在添加菜单中，也不接受 `open()`。每个活动 View 都在独立错误边界内渲染，并接收其 tab、focus 请求、状态更新方法、关闭操作和 focus 确认方法。内置 `tool` View 是普通 singleton tab。移除 View 注册会删除该 View 拥有的全部 tab（[决策](../../../.agents/notes/implemented/feature/2026-09-07-session-workbench-tabs.zh.md)）。
 
 -----
 

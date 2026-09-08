@@ -17,6 +17,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import { SessionSeq, type SessionId } from '@deepseek-ai/dsh-session/types'
 import { createChatStore } from '../src/client/stores.ts'
+import { createConversationWorkbenchStore } from '../src/client/details/workbench-store.ts'
 import type { DetailsLauncherInjected } from '../src/client/contract/slots.ts'
 
 usePinnedBrowserLanguages('zh-CN')
@@ -32,6 +33,7 @@ const ATTACHMENT = {
 
 type ChatInstance = ReturnType<ReturnType<typeof createChatStore>['create']>
 type ChatActions = ChatInstance['actions']
+type WorkbenchInstance = ReturnType<ReturnType<typeof createConversationWorkbenchStore>['create']>
 
 function sessionFakeFor() {
   return {
@@ -117,26 +119,41 @@ describe('Chat inject API', () => {
     const b = await bench()
     const { instance, injected } = b.chatViewApi(ROOT)
     injected.openDetails({ turnSeq: 2, callId: 'c1' })
-    expect(instance.store.getSnapshot().selection).toEqual({ turnSeq: 2, callId: 'c1' })
-    expect(b.layout.openDetails).toHaveBeenCalledOnce()
-    expect(b.runtime.storeOf('details', ROOT)).toBe(instance)
+    injected.openDetails({ turnSeq: 3, callId: 'c2' })
+    expect(instance.store.getSnapshot().selection).toEqual({ turnSeq: 3, callId: 'c2' })
+    const workbench = b.runtime.storeOf('details', ROOT) as WorkbenchInstance
+    expect(workbench.getSnapshot()).toMatchObject({ activeTabId: 'tool' })
+    expect(workbench.getSnapshot().tabs.map(tab => tab.viewId)).toEqual(['tool'])
+    expect(b.layout.openDetails).toHaveBeenCalledTimes(2)
+    expect(b.runtime.storeOf('details', ROOT)).not.toBe(instance)
     expect(b.runtime.storeOf('conversation.session', ROOT)).not.toBe(instance)
     await b.runtime.dispose()
   })
 
   it('opens the first registered Workbench View from the shared header launcher', async () => {
     const b = await bench()
+    const disposeOverview = b.runtime.slots.register({
+      name: 'conversation.details.view', id: 'overview', order: 10, label: () => '概览',
+    }, () => null)
     b.runtime.sessions.open(ROOT)
-    const { instance } = b.chatViewApi(ROOT)
+    b.chatViewApi(ROOT)
     const entry = b.runtime.slots.entries('conversation.session.header.utilities')
       .find(candidate => candidate.options.id === 'workbench')!
     const injected = (entry.inject as unknown as () => DetailsLauncherInjected)()
 
-    expect(injected.hooks.detailsViews.getSnapshot().map(view => view.id)).toEqual(['tool'])
+    await vi.waitFor(() => {
+      expect(injected.hooks.detailsViews.getSnapshot()).toEqual([
+        { id: 'tool', label: 'tool', launchable: false },
+        { id: 'overview', label: '概览', launchable: true },
+      ])
+    })
     injected.openDetails()
 
-    expect(instance.store.getSnapshot().detailsView).toBe('tool')
+    const workbench = b.runtime.storeOf('details', ROOT) as WorkbenchInstance
+    expect(workbench.getSnapshot()).toMatchObject({ activeTabId: 'overview' })
+    expect(workbench.getSnapshot().tabs.map(tab => tab.viewId)).toEqual(['overview'])
     expect(b.layout.openDetails).toHaveBeenCalledOnce()
+    disposeOverview()
     await b.runtime.dispose()
   })
 
@@ -168,21 +185,26 @@ describe('Chat inject API', () => {
 
   it('closes details while sharing selection through the Chat store', async () => {
     const b = await bench()
+    const disposeOverview = b.runtime.slots.register({
+      name: 'conversation.details.view', id: 'overview', order: 10, label: () => '概览',
+    }, () => null)
     const entry = b.runtime.slots.entries('details')[0]!
-    const store = b.runtime.storeOf('details', ROOT) as ChatInstance
-    const injected = (entry.inject as unknown as (
-      sessionId: SessionId,
-      actions: ChatActions,
-    ) => DetailsInjected)(ROOT, store.actions)
+    const store = b.runtime.storeOf('details', ROOT) as WorkbenchInstance
+    const injected = (entry.inject as unknown as (sessionId: SessionId) => DetailsInjected)(ROOT)
     expect(Object.keys(injected)).toEqual([
-      'hooks', 'closeDetails', 'completeDetailsFocus', 'selectDetailsView',
+      'workbench', 'hooks', 'closeDetails', 'openDetailsView',
     ])
-    store.actions.openDetailsView('tool', 'call-1')
-    injected.completeDetailsFocus()
-    expect(store.store.getSnapshot().detailsFocus).toBeNull()
+    await vi.waitFor(() => {
+      expect(injected.hooks.detailsViews.getSnapshot()).toContainEqual({
+        id: 'overview', label: '概览', launchable: true,
+      })
+    })
+    injected.openDetailsView('overview')
+    expect(store.getSnapshot().activeTabId).toBe('overview')
     injected.closeDetails()
     expect(b.layout.closeDetails).toHaveBeenCalledOnce()
-    expect(store).toBe(b.runtime.storeOf('conversation.view', ROOT))
+    expect(store).not.toBe(b.runtime.storeOf('conversation.view', ROOT))
+    disposeOverview()
     await b.runtime.dispose()
   })
 

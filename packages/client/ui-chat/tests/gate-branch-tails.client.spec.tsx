@@ -13,7 +13,7 @@ import type { SessionProviderComponent } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionPendingInteractionSnapshot } from '@deepseek-ai/dsh-client-ui-session/client'
 import { EMPTY_CONVERSATION_SNAPSHOT } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {
-  DetailsToolOwnerProps, RunningToolCall, SelectionTarget, ToolDetailsViewProps,
+  ConversationWorkbenchTab, DetailsToolOwnerProps, RunningToolCall, SelectionTarget, ToolDetailsViewProps,
 } from '@deepseek-ai/dsh-client-ui-chat/client'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { createChatStore } from '../src/client/stores.ts'
@@ -40,6 +40,13 @@ afterEach(() => {
 })
 
 const SID = 's1' as SessionId
+const TOOL_TAB: ConversationWorkbenchTab = {
+  id: 'tool',
+  viewId: 'tool',
+  title: '工具',
+  state: null,
+  closable: true,
+}
 
 /** Minimal framework seat for direct DetailsPanel host tests. */
 const SessionProviderStub: SessionProviderComponent = ({ children }) => children
@@ -137,7 +144,11 @@ describe('render branch tails', () => {
     const workspaces = emptyWorkspaces()
     const view = render(
       <ToolDetailsView
+        tab={TOOL_TAB}
+        active
         focus={null}
+        updateState={() => {}}
+        closeTab={() => {}}
         completeFocus={() => {}}
         SessionProvider={SessionProviderStub}
         renderSlot={renderToolDetailsProbe()}
@@ -199,7 +210,11 @@ describe('render branch tails', () => {
     const owners: DetailsToolOwnerProps[] = []
     const view = render(
       <ToolDetailsView
+        tab={TOOL_TAB}
+        active
         focus={null}
+        updateState={() => {}}
+        closeTab={() => {}}
         completeFocus={() => {}}
         SessionProvider={SessionProviderStub}
         renderSlot={renderToolDetailsProbe(owners)}

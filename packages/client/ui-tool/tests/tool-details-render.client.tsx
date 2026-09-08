@@ -29,28 +29,50 @@ export const useEmptyTrajectory: DetailsSlotProps['useTrajectory'] = selector =>
 
 type ToolWorkbenchFixtureProps = Omit<
   DetailsSlotProps,
-  'useDetailsViews' | 'completeDetailsFocus' | 'selectDetailsView' | 'renderSlot'
-> & Pick<ToolDetailsViewProps, 'renderSlot'>
+  'useDetailsViews' | 'workbench' | 'openDetailsView' | 'renderSlot'
+> & Pick<ToolDetailsViewProps, 'renderSlot' | 'useStore' | 'actions'>
 
 /** Compose the generic Workbench shell with its built-in Tool View for component tests. */
 export function ToolWorkbenchFixture(props: ToolWorkbenchFixtureProps) {
-  const { renderSlot, __renders, ...panelProps } = props
+  const { renderSlot, useStore, actions, __renders, ...panelProps } = props
   void __renders
   const useDetailsViews: DetailsSlotProps['useDetailsViews'] = selector => selector([{
     id: 'tool',
     label: props.t('details.tool'),
+    launchable: true,
   }])
+  const tab = { id: 'tool', viewId: 'tool', title: props.t('details.tool'), state: null, closable: true }
+  const snapshot = { version: 1 as const, sessionId: props.sessionId, tabs: [tab], activeTabId: 'tool', focus: null }
+  const workbench = {
+    activeViewId: 'tool',
+    getSnapshot: () => snapshot,
+    subscribe: () => () => {},
+    open: () => {},
+    openTab: () => {},
+    activateTab: () => {},
+    updateTab: () => {},
+    moveTab: () => {},
+    closeTab: () => {},
+    completeFocus: () => {},
+    close: () => {},
+  }
   return (
     <WorkbenchPanel
       {...panelProps}
       useDetailsViews={useDetailsViews}
-      completeDetailsFocus={() => {}}
-      selectDetailsView={() => {}}
+      workbench={workbench}
+      openDetailsView={() => {}}
       renderSlot={() => (
         <ToolDetailsView
           {...panelProps}
           renderSlot={renderSlot}
+          useStore={useStore}
+          actions={actions}
+          tab={tab}
+          active
           focus={null}
+          updateState={() => {}}
+          closeTab={() => {}}
           completeFocus={() => {}}
         />
       )}

@@ -86,6 +86,10 @@ describe('Chat apply wiring', () => {
     expect(b.runtime.slots.entries('settings.general.item').map(row => row.options.id))
       .toEqual(['transcript-view', 'composer-enter'])
     expect(b.runtime.slots.entries('details')).toHaveLength(1)
+    expect(b.runtime.slots.entries('conversation.details.view').map(row => ({
+      id: row.options.id,
+      launchable: resolveSlotLabel(row.options.label) !== undefined,
+    }))).toContainEqual({ id: 'tool', launchable: false })
     await b.runtime.dispose()
   })
 
@@ -112,7 +116,7 @@ describe('Chat apply wiring', () => {
     const conversationStore = storeOf(b.runtime, 'conversation.session')
     const chatStore = storeOf(b.runtime, 'conversation.view')
     expect(storeOf(b.runtime, 'conversation.session.header')).toBe(conversationStore)
-    expect(storeOf(b.runtime, 'details')).toBe(chatStore)
+    expect(storeOf(b.runtime, 'details')).not.toBe(chatStore)
     expect(chatStore).toBeDefined()
     expect(chatStore).not.toBe(conversationStore)
     await b.runtime.dispose()
