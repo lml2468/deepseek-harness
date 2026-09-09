@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-09-07-sidebar-responsive-tab-info.md
-2026-09-07-sidebar-responsive-tab-info.md: 1e7e7b856e0d76f6f3b3d931b20fbab8f7597124
-2026-09-07-sidebar-responsive-tab-info.zh.md: 1dc3f3894257a0796f47032899aa3cfd714539b1
+2026-09-07-sidebar-responsive-tab-info.md: 7de7998573d81d7113ef2c318a48ffa67f89cfa9
+2026-09-07-sidebar-responsive-tab-info.zh.md: 19600f9f15550a5faac42d98223f3b9ba0ab07f4

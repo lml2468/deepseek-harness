@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The way back into a hidden panel: the header's corner button exists exactly
- * while the panel is collapsed, asks for it to expand, and leaves a same-size
- * footprint while the panel is shown so the header row never moves.
+ * The header's corner button remains available across both panel states and
+ * toggles the shared per-session store with state-specific accessible copy.
  */
 import { describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
@@ -37,33 +36,32 @@ function mountButton() {
   } as unknown as ExpandButtonProps
   const view = render(<ExpandButton {...props} />)
   const control = (): HTMLElement | null => view.container.querySelector('[data-sidebar-right-expand]')
-  const placeholder = (): HTMLElement | null => view.container.querySelector('[data-sidebar-right-expand-placeholder]')
-  return { instance, view, control, placeholder }
+  return { instance, view, control }
 }
 
 describe('ExpandButton', () => {
   it('offers the way in while the session has no surface yet, and asks the panel to expand', () => {
-    const { instance, control, placeholder } = mountButton()
+    const { instance, control } = mountButton()
     const button = control()
     if (button === null) throw new Error('expected the expand control')
     expect(button.getAttribute('aria-label')).toBe('chrome.expand')
     expect(button.textContent).toBe('chrome.label')
-    expect(placeholder()).toBeNull()
     fireEvent.click(button)
     expect(instance.getSnapshot().bySession[SESSION]?.layout.expanded).toBe(true)
-    // Shown: the control gives way to its footprint, so the seat keeps its width.
-    expect(control()).toBeNull()
-    expect(placeholder()).not.toBeNull()
+    expect(control()?.getAttribute('aria-label')).toBe('chrome.collapse')
+    expect(control()?.hasAttribute('data-sidebar-right-expanded')).toBe(true)
     cleanup()
   })
 
-  it('comes back when the panel collapses again', () => {
-    const { instance, control, placeholder } = mountButton()
+  it('collapses an expanded panel and returns to the expand state', () => {
+    const { instance, control } = mountButton()
     act(() => { instance.actions.setExpanded(SESSION, true) })
-    expect(control()).toBeNull()
-    act(() => { instance.actions.setExpanded(SESSION, false) })
-    expect(control()).not.toBeNull()
-    expect(placeholder()).toBeNull()
+    const button = control()
+    if (button === null) throw new Error('expected the collapse control')
+    expect(button.getAttribute('aria-label')).toBe('chrome.collapse')
+    fireEvent.click(button)
+    expect(instance.getSnapshot().bySession[SESSION]?.layout.expanded).toBe(false)
+    expect(control()?.getAttribute('aria-label')).toBe('chrome.expand')
     cleanup()
   })
 })

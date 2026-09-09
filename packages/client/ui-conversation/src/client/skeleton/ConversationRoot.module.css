@@ -31,21 +31,11 @@
 
 .header {
   position: relative;
+  box-sizing: border-box;
   flex: none;
-  padding: 10px 24px 9px 28px;
-  border-bottom: 1px solid transparent;
-}
-
-.header::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: 1px;
-  left: 0;
-  z-index: 0;
-  height: 0.5px;
-  background: var(--dsw-alias-border-l3);
-  pointer-events: none;
+  height: 56px;
+  padding: 10px 24px 10px 28px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l3);
 }
 
 /* Blank hero/settling: keep the strict Session header mounted without taking

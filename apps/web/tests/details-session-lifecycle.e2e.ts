@@ -211,7 +211,7 @@ describe.skipIf(MODE === 'record')('web e2e: details panel follows the current S
     const column = page.locator('[data-rightbar-col]')
     const panel = column.locator('[data-sidebar-right-panel]')
     const panes = column.locator('[data-dockkit-pane]')
-    const normalWidth = Math.round(viewport.width * 0.45)
+    const normalWidth = Math.round(viewport.width * 0.35)
     const normalColumns = [280, viewport.width - 280 - normalWidth, normalWidth]
     const checkpoints: string[] = ['# Recorded-session Sidebar states']
     const checkpoint = async (label: string): Promise<void> => {

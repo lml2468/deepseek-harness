@@ -74,18 +74,18 @@ describe('createLayoutStore', () => {
 })
 
 describe('right panel', () => {
-  it('initializes at 45% of the latest frame only on first opening', () => {
+  it('initializes at 35% of the latest frame only on first opening', () => {
     const { store, actions } = createLayoutStore().create()
     actions.setViewportWidth(1000)
     expect(store.getSnapshot().rightbar).toBeNull()
     actions.openRightbar(true, false)
-    expect(store.getSnapshot().rightbar).toBe(450)
+    expect(store.getSnapshot().rightbar).toBe(350)
     actions.setViewportWidth(2000)
     actions.openRightbar(true, true)
-    expect(store.getSnapshot().rightbar).toBe(450)
+    expect(store.getSnapshot().rightbar).toBe(350)
     actions.closeRightbar()
     actions.openRightbar(true, false)
-    expect(store.getSnapshot().rightbar).toBe(450)
+    expect(store.getSnapshot().rightbar).toBe(350)
   })
 
   it('keeps track and fullscreen reports independent and clears both on close', () => {

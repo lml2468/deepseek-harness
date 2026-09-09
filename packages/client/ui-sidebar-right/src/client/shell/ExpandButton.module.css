@@ -2,17 +2,10 @@
  * Sits in the conversation header's corner seat, level with the Session log
  * control, so it takes that row's 32px height and the same hover fill. The
  * visible label makes this product surface discoverable instead of leaving an
- * ambiguous panel glyph among unrelated utilities. The placeholder is the
- * same box with nothing in it, so the seat's width holds while the panel is
- * shown.
+ * ambiguous panel glyph among unrelated utilities. The control stays mounted
+ * in both states, so the header keeps its geometry and always exposes the
+ * expand/collapse action.
  */
-.placeholder {
-  display: inline-block;
-  flex: none;
-  width: 68px;
-  height: 32px;
-}
-
 .button {
   display: inline-flex;
   flex: none;
@@ -24,7 +17,7 @@
   padding: 0 10px;
   color: var(--dsw-alias-label-secondary);
   background: var(--dsw-alias-bg-l2);
-  border: 1px solid var(--dsw-alias-border-l2);
+  border: 0.5px solid var(--dsw-alias-border-l2);
   border-radius: 8px;
   cursor: pointer;
   font: inherit;
