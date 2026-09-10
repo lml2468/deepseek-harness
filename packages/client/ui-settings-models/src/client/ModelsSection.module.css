@@ -3,29 +3,6 @@
  * render the light-mode literals written as their fallbacks and stay light
  * under the dark theme. */
 
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 720px;
-  color: var(--dsw-alias-label-primary);
-}
-
-.title {
-  margin: 0;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 500;
-  color: var(--dsw-alias-label-primary);
-}
-
-.intro {
-  margin: 0;
-  font-size: 14px;
-  line-height: 22px;
-  color: var(--dsw-alias-label-tertiary);
-}
-
 .notice {
   margin: 0;
   font-size: 12px;
@@ -42,8 +19,7 @@
 
 .rows {
   list-style: none;
-  /* Extra air between the title/intro block and the first provider card. */
-  margin: 12px 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;

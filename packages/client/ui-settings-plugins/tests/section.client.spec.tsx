@@ -116,7 +116,7 @@ describe('PluginsSettingsSection', () => {
   it('says so when no plugin contributed a tab', () => {
     renderSection([])
 
-    expect(screen.getByText(en.empty)).toBeTruthy()
+    expect(screen.getByText(en.empty).closest('[data-dsh-settings-state]')).toBeTruthy()
     expect(screen.queryByRole('tab')).toBeNull()
   })
 
@@ -142,11 +142,15 @@ describe('PluginsSettingsSection', () => {
     expect(screen.getByText('all').closest('[role="tabpanel"]')).toHaveProperty('hidden', true)
   })
 
-  it('leads with its own heading and intro', () => {
+  it('uses the shared section scaffold while the shell owns the heading', () => {
     renderSection([{ id: 'configurable', order: 0, label: en.configurableTab }])
 
-    expect(screen.getByRole('heading', { name: en.title })).toBeTruthy()
-    expect(screen.getByText(en.intro)).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: en.title })).toBeNull()
+    expect(screen.getByText(en.intro).closest('[data-dsh-settings-section]')).toBeTruthy()
+    const section = screen.getByText(en.intro).closest('[data-dsh-settings-section]')
+    const tablist = screen.getByRole('tablist')
+    expect(section?.children[1]?.contains(tablist)).toBe(true)
+    expect(section?.children[2]?.getAttribute('data-dsh-settings-tab-panel')).toBe('')
   })
 
   it('moves focus and selection with standard horizontal tab keys', () => {

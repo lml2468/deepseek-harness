@@ -110,6 +110,8 @@ describe('the preset list', () => {
   it('separates built-in presets from custom ones', () => {
     renderSection()
 
+    expect(screen.getByText(en.sectionIntro).closest('[data-dsh-settings-section]')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: en.nav })).toBeNull()
     // Two different things: one set ships with the deployment and is
     // read-only, the other is the user's own.
     expect(screen.getByRole('heading', { name: en.builtInGroup })).toBeTruthy()

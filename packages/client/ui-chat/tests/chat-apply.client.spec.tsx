@@ -84,6 +84,7 @@ describe('Chat apply wiring', () => {
       .toEqual(['stats'])
     expect(b.runtime.slots.entries('settings.general.item').map(row => row.options.id))
       .toEqual(['transcript-view', 'composer-enter'])
+    expect(resolveSlotLabel(b.runtime.slots.entries('settings.general.item')[0]!.options.label)).toBe('对话')
     await b.runtime.dispose()
   })
 

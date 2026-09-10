@@ -94,7 +94,7 @@ function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelP
         </nav>
         <div className={css.content}>
           <div className={css.header}>
-            {active === 'general' && <h2 className={css.contentTitle}>{activeRow?.label}</h2>}
+            {activeRow === undefined ? null : <h2 className={css.contentTitle}>{activeRow.label}</h2>}
             <div className={css.actions}>{renderSlot('settings.action', {})}</div>
             <button ref={closeButton} type="button" className={css.close} onClick={onClose}>
               <IconCloseOutline16 size={14} />

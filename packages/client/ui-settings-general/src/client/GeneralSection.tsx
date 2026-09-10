@@ -2,7 +2,9 @@
 import type {
   HostObservable, InjectFace, PropsRenderSlots, PropsRuntime,
 } from '@deepseek-ai/dsh-client-ui-slots'
-import css from './GeneralSection.module.css'
+import {
+  SettingsCard, SettingsGroup, SettingsSection,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 
 /** One locale-aware item row projected from the General item ledger. */
 export interface SettingsGeneralItemEntry {
@@ -45,19 +47,18 @@ export function GeneralSection({ renderSlot, useItems }: GeneralSectionComponent
   }
 
   return (
-    <div className={css.section}>
+    <SettingsSection>
       {groups.map(group => (
-        <div className={css.group} key={group.label}>
-          {group.label !== '' && <h3 className={css.groupTitle}>{group.label}</h3>}
-          <div className={css.card}>
+        <SettingsGroup key={group.label} title={group.label === '' ? undefined : group.label}>
+          <SettingsCard padding="rows">
             {group.items.map(item => (
-              <div className={css.item} key={item.id}>
+              <div key={item.id}>
                 {renderSlot('settings.general.item', {}, { only: item.id })}
               </div>
             ))}
-          </div>
-        </div>
+          </SettingsCard>
+        </SettingsGroup>
       ))}
-    </div>
+    </SettingsSection>
   )
 }

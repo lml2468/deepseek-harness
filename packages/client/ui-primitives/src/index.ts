@@ -13,6 +13,13 @@ export { Tag } from './Tag.tsx'
 export type { TagTone } from './Tag.tsx'
 export { Switch } from './Switch.tsx'
 export { Input } from './Input.tsx'
+export {
+  SettingsCard, SettingsGroup, SettingsRow, SettingsSection, SettingsState, SettingsTabPanel, SettingsTabs,
+} from './SettingsScaffold.tsx'
+export type {
+  SettingsCardProps, SettingsGroupProps, SettingsRowProps, SettingsSectionProps, SettingsStateProps,
+  SettingsTabItem, SettingsTabPanelProps, SettingsTabsProps,
+} from './SettingsScaffold.tsx'
 export { Menu } from './Menu.tsx'
 export type { MenuEntry, MenuItem, MenuSeparator, MenuLabel } from './Menu.tsx'
 export { useAnchoredMaxHeight } from './useAnchoredMaxHeight.ts'

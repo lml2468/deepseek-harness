@@ -13,7 +13,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
-  Button, IconBrowseOutline16, IconCopyOutline16, IconFolderOpenOutline16, IconPlusOutline16, IconTrashOutline16, Modal, Tag, Tooltip,
+  Button, IconBrowseOutline16, IconCopyOutline16, IconFolderOpenOutline16, IconPlusOutline16, IconTrashOutline16, Modal,
+  SettingsCard, SettingsGroup, SettingsSection, SettingsState, Tag, Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
@@ -195,12 +196,17 @@ export function AgentPresetSection(props: AgentPresetSectionProps): ReactNode {
     /* v8 ignore next -- an error status always carries text; the fallback satisfies the nullable type */
     const detail = state.error ?? ''
     return (
-      <div className={css.section}>
-        <p className={css.error} role="alert">{`${t('error')} ${detail}`}</p>
-        <button type="button" className={css.secondaryButton} onClick={() => { void load() }}>
-          {t('retry')}
-        </button>
-      </div>
+      <SettingsSection>
+        <SettingsCard padding="none">
+          <SettingsState
+            role="alert"
+            tone="danger"
+            title={t('error')}
+            description={detail}
+            action={<Button variant="outline" onClick={() => { void load() }}>{t('retry')}</Button>}
+          />
+        </SettingsCard>
+      </SettingsSection>
     )
   }
 
@@ -228,9 +234,7 @@ export function AgentPresetSection(props: AgentPresetSectionProps): ReactNode {
     : null
 
   return (
-    <div className={css.section}>
-      <h2 className={css.title}>{t('nav')}</h2>
-      <p className={css.intro}>{t('sectionIntro')}</p>
+    <SettingsSection description={t('sectionIntro')}>
       {state.error === null ? null : <p className={css.error} role="alert">{state.error}</p>}
       {([['system', t('builtInGroup')], ['user', t('customGroup')]] as const).map(([trust, heading]) => {
         const group = state.rows
@@ -241,8 +245,7 @@ export function AgentPresetSection(props: AgentPresetSectionProps): ReactNode {
         const tail = trust === 'user' ? creatorButton : null
         if (group.length === 0 && tail === null) return null
         return (
-          <section key={trust} className={css.group}>
-            <h3 className={css.groupHead}>{heading}</h3>
+          <SettingsGroup key={trust} title={heading}>
             {group.length === 0 ? null : (
               <ul className={css.cards}>
                 {group.map(({ row, text }) => (
@@ -383,7 +386,7 @@ export function AgentPresetSection(props: AgentPresetSectionProps): ReactNode {
               </ul>
             )}
             {tail}
-          </section>
+          </SettingsGroup>
         )
       })}
       <CopyDialog
@@ -441,6 +444,6 @@ export function AgentPresetSection(props: AgentPresetSectionProps): ReactNode {
           </>
         )}
       />
-    </div>
+    </SettingsSection>
   )
 }

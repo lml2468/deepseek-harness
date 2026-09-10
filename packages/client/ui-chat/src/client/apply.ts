@@ -86,6 +86,7 @@ export function apply(ctx: Context): void {
     name: 'settings.general.item',
     id: 'transcript-view',
     order: 12,
+    label: () => t('settings.group.conversation'),
     locale: NS,
     inject: (): TranscriptViewRowInjected => ({
       hooks: { transcriptView: transcriptView.mode },

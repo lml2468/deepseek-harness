@@ -315,6 +315,8 @@ describe('ModelsSection', () => {
 
   it('dispatches the provider-card seat per rendered row, keyed by the owning namespace', async () => {
     const { renderSlot } = await mountSection()
+    expect(screen.getByText(en.intro).closest('[data-dsh-settings-section]')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: en.title })).toBeNull()
     const cards = cardSeatCalls(renderSlot)
     expect(cards).toContainEqual(['openai', true, true, 'llm-pi-ai'])
     expect(cards).toContainEqual(['deepseek-official', true, false, 'llm-deepseek'])

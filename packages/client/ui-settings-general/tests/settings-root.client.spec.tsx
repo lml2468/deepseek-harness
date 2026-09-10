@@ -283,6 +283,15 @@ describe('SettingsPanel navigation', () => {
     expect(screen.queryByTestId('section-general')).toBeNull()
   })
 
+  it('renders the active section title for every section', () => {
+    mount()
+    openPanel()
+    expect(screen.getByRole('heading', { name: 'General', level: 2 })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Models' }))
+    expect(screen.getByRole('heading', { name: 'Models', level: 2 })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'General', level: 2 })).toBeNull()
+  })
+
   it('mounts onboarding steps in order and transfers ownership only on completion', () => {
     const { renderSlot } = mount()
     const first = renderSlot.mock.calls.find(call => call[0] === 'settings.onboarding')

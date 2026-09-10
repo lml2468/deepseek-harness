@@ -37,6 +37,7 @@ Check this table before writing a control in a feature package. A plugin cannot 
 | `Button` | Clickable action; `variant` selects `primary`, `ghost`, `outline`, or `toolbar`. |
 | `Switch` | Two-state toggle, 36×20. `label` is required, so the control cannot ship unnamed. |
 | `Input` | Single-line text entry for search boxes and inline forms. |
+| `SettingsSection`, `SettingsGroup`, `SettingsCard`, `SettingsRow`, `SettingsState`, `SettingsTabs`, `SettingsTabPanel` | Structural settings scaffold: one content rhythm for sections, groups, tabs, bordered surfaces, preference rows, and loading/empty/error states. `SettingsSection.navigation` fixes tabs after optional description and before content. The settings shell owns the page title and header actions. |
 | `Menu` | Dropdown of items, separators, and group labels, with nested submenus. |
 | `Pill` | Selectable capsule button for view switchers and filters; takes `active` and `onClick`. |
 | `Tag` | Read-only capsule badge; `tone` selects one of eight palettes. |
