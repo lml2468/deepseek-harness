@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-09-04-composable-conversation-hero-and-workbench.md
-2026-09-04-composable-conversation-hero-and-workbench.md: 7ac281c9fc2633fc60288a82b16b92112682f746
-2026-09-04-composable-conversation-hero-and-workbench.zh.md: c2d828b322db1ed87f6408ff943e6a18ba40f665
+2026-09-04-composable-conversation-hero-and-workbench.md: 589ff39a0d183f2aacaa49fb67ab5831b92aa4ce
+2026-09-04-composable-conversation-hero-and-workbench.zh.md: 4aae17017131bd3032ec2497ab9cfe09f93ee013

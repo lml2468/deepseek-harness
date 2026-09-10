@@ -135,13 +135,12 @@ function HeroFish({ hovering }: { hovering: boolean }) {
 /**
  * Render the hero chrome (headline only; no composer, no workspace row).
  * @param props - see {@link HeroShellProps}.
- * @returns the Hero headline element tree.
+ * @returns the centered hero element tree.
  */
 export function HeroShell({ t, renderSlot }: HeroShellProps) {
   const [hovering, setHovering] = useState(false)
   return (
     <div className={css.headline}>
-      {/* figma 34:10412: fish 34×25 leading the headline, gap 10. */}
       <span
         className={css.fishHitbox}
         onMouseEnter={() => {
@@ -155,14 +154,15 @@ export function HeroShell({ t, renderSlot }: HeroShellProps) {
           fallback: <HeroFish hovering={hovering} />,
         })}
       </span>
-      <span className={css.headlineText}>
-        {t('hero.headline')}
+      <span className={css.titleGroup}>
+        <span>{t('hero.headline')}</span>
+        <span className={css.previewBadge}>{t('hero.preview')}</span>
       </span>
     </div>
   )
 }
 
-/** WorkBuddy-density default layout for the resident Hero and composer. */
+/** Default layout for the resident Hero and its single composer instance. */
 export function HeroLayout({ header, contextControls, content, composer, footer, active }: HeroLayoutProps) {
   return (
     <div className={css.root} data-hero-active={active || undefined}>

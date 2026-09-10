@@ -1,9 +1,9 @@
 - dialog "设置":
   - navigation:
     - text: 设置
-    - button "通用设置":
+    - button "通用":
       - img
-      - text: 通用设置
+      - text: 通用
     - button "模型":
       - img
       - text: 模型
@@ -13,11 +13,11 @@
     - button "Agent 预设":
       - img
       - text: Agent 预设
+  - heading "插件" [level=2]
   - button "打开配置文件"
   - button "关闭":
     - img
     - text: 关闭
-  - heading "插件" [level=2]
   - paragraph: 配置和查看本部署已安装的插件。
   - tablist "插件视图":
     - tab "插件配置" [selected]

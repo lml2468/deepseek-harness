@@ -14,14 +14,12 @@
     - button "Review deepseek-harness/deepseek-harness#314" [disabled]
   - img
   - text: Standard mode
-  - button "Session log":
-    - text: Session log
+  - button "Switch task view":
     - img
-  - button "Open the sidebar":
+  - button "More actions":
     - img
-  - tablist:
-    - tab "Chat" [selected]
-    - tab "Trajectory"
+  - button "Open right sidebar":
+    - img
 - button "System prompt":
   - img
   - img
@@ -42,14 +40,14 @@
   - img
   - text: Ran for {{duration}}
 - text: {{clock}}
-- textbox "Message or run a task... / commands, @ files or sessions"
-- button "Add content":
-  - img
-- button "Add attachment":
+- textbox "Message or run a task, / commands, @ files or sessions"
+- button "Add files or run commands":
   - img
 - 'button "Access mode, current: Read Only"': Read Only
 - button "Select model, current github-webhook-review-test/reply":
   - text: github-webhook-review-test/reply
   - img
 - button "Send message" [disabled]
-- text: 1 turns · 1 steps LLM {{duration}}
+- button "1 turns 1 steps":
+  - img
+  - text: 1 turns 1 steps

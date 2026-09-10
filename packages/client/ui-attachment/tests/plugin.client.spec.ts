@@ -32,7 +32,7 @@ describe('attachment plugin', () => {
 
   it('registers all entries and removes them with the plugin fiber', async () => {
     const { ctx, fiber } = await bench()
-    expect(inject).toEqual(['slots', 'locale'])
+    expect(inject).toEqual(['slots'])
     expect(ctx.slots.entries('conversation.input.attachments')).toMatchObject([{
       locale: 'conversation',
       component: ComposerAttachments,

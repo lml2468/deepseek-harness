@@ -3,14 +3,12 @@
     - button "Read the attached file with" [disabled]
   - img
   - text: Standard mode
-  - button "Session log":
-    - text: Session log
+  - button "Switch task view":
     - img
-  - button "Open the sidebar":
+  - button "More actions":
     - img
-  - tablist:
-    - tab "Chat" [selected]
-    - tab "Trajectory"
+  - button "Open right sidebar":
+    - img
 - button "System prompt":
   - img
   - img
@@ -40,10 +38,8 @@
   - img
   - text: Ran for {{duration}}
 - text: {{clock}}
-- textbox "Message or run a task... / commands, @ files or sessions"
-- button "Commands":
-  - img
-- button "Add attachment":
+- textbox "Message or run a task, / commands, @ files or sessions"
+- button "Add files or run commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
 - button "Select model, current DeepSeek-V4-Flash-Vision-Exp, reasoning effort high":
@@ -51,4 +47,9 @@
   - img
 - button "1% of context used"
 - button "Send message" [disabled]
-- text: 1 turns · 2 steps LLM {{duration}} · Tool call {{duration}} TTFT avg {{duration}} · {{throughput}} tok/s Cache hit 51% Input 17.2K tok · Output 155 tok
+- button "1 turns 2 steps · {{throughput}} tok/s":
+  - img
+  - text: 1 turns 2 steps{{throughput}} tok/s
+- button "17.3K tok · Cache hit 51%":
+  - img
+  - text: 17.3K tokCache hit 51%

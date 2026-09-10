@@ -3,14 +3,12 @@
     - button "workspace" [disabled]
   - img
   - text: Standard mode
-  - button "Session log":
-    - text: Session log
+  - button "Switch task view":
     - img
-  - button "Open the sidebar":
+  - button "More actions":
     - img
-  - tablist:
-    - tab "Chat" [selected]
-    - tab "Trajectory"
+  - button "Open right sidebar":
+    - img
 - navigation "Turn navigation":
   - button "Jump to turn 1"
   - button "Jump to turn 2"
@@ -228,10 +226,8 @@
 - text: {{clock}}
 - button "Back to bottom":
   - img
-- textbox "Message or run a task... / commands, @ files or sessions"
-- button "Add content":
-  - img
-- button "Add attachment":
+- textbox "Message or run a task, / commands, @ files or sessions"
+- button "Add files or run commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
 - button "Select model, current DeepSeek-V4-Flash":
@@ -239,4 +235,9 @@
   - img
 - button "9% of context used"
 - button "Send message" [disabled]
-- text: 2 turns · 12 steps LLM {{duration}} · Tool call {{duration}} TTFT avg {{duration}} · {{throughput}} tok/s Cache hit 91% Input 113K tok · Output 2.4K tok
+- button "2 turns 12 steps · {{throughput}} tok/s":
+  - img
+  - text: 2 turns 12 steps{{throughput}} tok/s
+- button "115K tok · Cache hit 91%":
+  - img
+  - text: 115K tokCache hit 91%

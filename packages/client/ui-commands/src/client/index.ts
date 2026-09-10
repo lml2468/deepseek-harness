@@ -11,8 +11,6 @@ import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 // key's owner) into this program so the overlay registration below typechecks
 // against the real declaration — no runtime edge to ui-conversation.
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import { IconCodeOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
-import { createElement } from 'react'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
@@ -29,7 +27,8 @@ export { filterOptions, PopupSelectController } from './popup.ts'
 export type { PopupSelectDeps, PopupSpec, PopupState, TokenSegment } from './popup.ts'
 export type { PopupSelectInjected, PopupSelectViewProps } from './PopupSelectView.tsx'
 export type {
-  CommandContribution, CommandDecoration, CommandUiContract, CommandUiSpec, SelectConfirmation, SelectOption,
+  ActionSpec, CommandContribution, CommandDecoration, CommandUiContract, CommandUiSpec, PopupSelectSpec,
+  SelectConfirmation, SelectOption,
 } from './contract.ts'
 export type { CommandKey } from './locales.ts'
 
@@ -41,7 +40,7 @@ declare module '@deepseek-ai/cordis' {
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
-    /** The popupSelect shell's copy. */
+    /** The menu rows' and the popupSelect shell's copy. */
     command: CommandKey
   }
 }
@@ -55,22 +54,11 @@ export const inject = [
 ]
 
 /**
- * Client plugin body: mount the service, then register the popupSelect shell
- * into the input overlay once its declarer is up.
+ * Mount the command service and its per-session popupSelect overlay.
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-commands: dictionaries')
-  const t = ctx.locale.bind(NS)
-  ctx.inject(['composerMenuActions'], scope => scope.effect(() => scope.composerMenuActions.register({
-    id: 'commands',
-    order: 30,
-    group: 'capability',
-    label: () => t('menu.action'),
-    icon: createElement(IconCodeOutline16),
-    availability: () => ({ visible: true }),
-    invoke: (context) => { context.openInputTrigger('command', '/') },
-  }), 'ui-commands: Composer action'))
   ctx.plugin(CommandUiRuntime)
   ctx.inject(['slots', 'commandUi', 'sessions'], (scope: ClientContext) => {
     const command = scope.commandUi

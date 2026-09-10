@@ -5,8 +5,6 @@ export { UiConversation } from './conversation/assembly.ts'
 export type { ConversationBinding } from './conversation/assembly.ts'
 export { ConversationController, UnsupportedImageMediaTypeError } from './service.ts'
 export type { IConversation } from './service.ts'
-export { ComposerMenuActionRegistry } from './composer-menu-actions.ts'
-export type { ComposerActionContext, ComposerMenuAction } from './composer-menu-actions.ts'
 export type {
   ConversationContextReader, ConversationLocation,
   ConversationLocationData, ConversationLocationDataScope, ConversationLocationDataSource,
@@ -34,8 +32,10 @@ export type {
 } from './contract/context-provenance.ts'
 export type {
   ConversationPromptSnapshot, RequestInspectionSnapshot, RequestPromptChange, RequestPromptInspection, RequestPromptInspector, RequestView,
+  SystemPromptNode,
 } from './contract/request-inspection.ts'
 export { inspectRequestPrompt } from './contract/request-inspection.ts'
+export type { SystemPromptState, SystemPromptInspector } from './contract/system-prompt.ts'
 export type { ConversationStoreState, ConversationViewRequest, ViewTab } from './contract/views.ts'
 
 export { ConversationNodeAssembler } from './conversation/assembler.ts'
@@ -53,7 +53,7 @@ export type {
   ComposerAttachment, ComposerAttachmentsOwnerProps, ComposerAttachmentsProps,
   ComposerFileAttachment, ComposerImageAttachment, DraftFileUpload, DraftFileUploads,
   ComposerBarInjected, ComposerBarOwnerProps, ComposerBarProps, ComposerChainProps,
-  ConversationHeaderActionOwnerProps, ConversationHeaderLineageOwnerProps,
+  ConversationHeaderActionOwnerProps, ConversationHeaderCornerOwnerProps, ConversationHeaderLineageOwnerProps,
   ConversationHeroContext, ConversationHeroLayoutOwnerProps,
   ConversationInjected, ConversationSessionHeaderInjected, ConversationSessionHeaderSlotProps,
   ConversationSessionInjected, ConversationSessionSlotProps, ConversationSlotProps,
@@ -76,7 +76,5 @@ declare module '@deepseek-ai/cordis' {
     conversation: import('./service.ts').IConversation
     /** Target-neutral Conversation registries and per-Session assembly. */
     uiConversation: import('./conversation/assembly.ts').UiConversation
-    /** Ordered capability entries shown by the resident Composer `+` menu. */
-    composerMenuActions: import('./composer-menu-actions.ts').ComposerMenuActionRegistry
   }
 }

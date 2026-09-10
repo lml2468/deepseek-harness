@@ -3,14 +3,12 @@
     - button "Stream one TypeScript fence for" [disabled]
   - img
   - text: Standard mode
-  - button "Session log":
-    - text: Session log
+  - button "Switch task view":
     - img
-  - button "Open the sidebar":
+  - button "More actions":
     - img
-  - tablist:
-    - tab "Chat" [selected]
-    - tab "Trajectory"
+  - button "Open right sidebar":
+    - img
 - button "System prompt":
   - img
   - img
@@ -26,10 +24,8 @@
 - button "Copy"
 - code: "const first: number = 1 const second = \"two\" let tail"
 - status: Deep diving...
-- textbox "Message or run a task... / commands, @ files or sessions"
-- button "Add content":
-  - img
-- button "Add attachment":
+- textbox "Message or run a task, / commands, @ files or sessions"
+- button "Add files or run commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
 - button "Select model, current streaming-fence-highlight-test/streaming-fence":

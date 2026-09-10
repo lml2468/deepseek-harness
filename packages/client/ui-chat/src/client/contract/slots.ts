@@ -1,6 +1,6 @@
 /** Chat-owned Slot declarations and composed component props. */
 import type { MessageId } from '@deepseek-ai/dsh-llm/brand'
-import type { SessionSeq } from '@deepseek-ai/dsh-session/types'
+import type { SessionId, SessionSeq } from '@deepseek-ai/dsh-session/types'
 import type {
   CommandNode, CompactionSummaryNode, ConversationLocationDataStore, ConversationTurnDataMap,
   MessageImageLoader, MessageImagesOwnerProps, RenderMessageImages, TurnErrorNode, TurnLocation,
@@ -63,9 +63,10 @@ export interface ChatFileMentions {
   /**
    * Resolve prose links for one closing Turn.
    * @param owner - closing-Turn identity and file opener.
+   * @param sessionId - viewed Session, including when history is inherited from a fork.
    * @returns link resolver when available.
    */
-  forClosing(owner: TurnTailOwnerProps): MarkdownFileMentions | undefined
+  forClosing(owner: TurnTailOwnerProps, sessionId: SessionId): MarkdownFileMentions | undefined
 }
 
 declare module '@deepseek-ai/cordis' {
@@ -88,6 +89,8 @@ export interface ChatNodeTurnDataInjected {
 /** Stable owner currency delivered to a keyed Chat renderer. */
 export interface ChatNodeOwnerProps {
   cwd?: string | undefined
+  /** Open the current source file of a skill referenced by a sent message. */
+  openSkill: (name: string) => void
   openFile: (path: string, options?: OpenFileOptions) => void
   inspectCall: (callId: ToolCallId) => void
   forkAt: (seq: number) => void
@@ -147,6 +150,8 @@ export interface ChatViewInjected {
     /** Resolve the stable Turn-process source for one Chat Node key. */
     chatNodeProcess: (key: string) => ChatNodeProcessSource
   }
+  /** Open the current source file of a skill referenced by a sent message. */
+  openSkill: (name: string) => void
   openFile: (path: string, options?: OpenFileOptions) => Promise<void>
   loadOlder: () => void
   /** Jump loader: page history back through seq; resolves when the window covers it. */

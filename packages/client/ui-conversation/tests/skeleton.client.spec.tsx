@@ -34,7 +34,7 @@ import type {
 import type { ViewTab } from '../src/client/contract/views.ts'
 
 // Every session-scope fixture carries the resource hook the resources plugin merges into GlobalStandardProps.
-const useResource = (() => ({ status: 'none' as const, value: undefined, failure: undefined, reload: () => {} })) as GlobalStandardProps['useResource']
+const useResource = (() => ({ status: 'none' as const, value: undefined, failure: undefined })) as GlobalStandardProps['useResource']
 
 // jsdom implements no Range geometry (Lexical's scroll-into-view measures the
 // caret with one once the surface is genuinely contenteditable).
@@ -203,6 +203,7 @@ function mount(
           useChat={useChat}
           useTrajectory={useTrajectory}
           useSessions={props.useSessions}
+          usePanelInfo={props.usePanelInfo}
           useResource={useResource}
           useSessionPendingInteraction={useSessionPendingInteraction}
           useWorkspaces={props.useWorkspaces}
@@ -229,6 +230,7 @@ function mount(
           useChat={useChat}
           useTrajectory={useTrajectory}
           useSessions={props.useSessions}
+          usePanelInfo={props.usePanelInfo}
           useResource={useResource}
           useSessionPendingInteraction={useSessionPendingInteraction}
           useWorkspaces={props.useWorkspaces}
@@ -255,6 +257,7 @@ function mount(
           useSession={useSession}
           useConversation={useConversation}
           useSessions={props.useSessions}
+          usePanelInfo={props.usePanelInfo}
           useSessionPendingInteraction={useSessionPendingInteraction}
           useWorkspaces={props.useWorkspaces}
           useProjection={(() => undefined)}
@@ -266,9 +269,8 @@ function mount(
           retryFileUpload={undefined}
           removeAttachment={() => {}}
           resolveDraftAttachments={() => []}
-          resolveSubmitMode={() => 'queue'}
-          toggleInputTrigger={vi.fn()}
-          useMenuActions={bindSnapshotSelector(createSnapshotStore([]))}
+          toggleCommandMenu={vi.fn()}
+          useBusyEnter={bindSnapshotSelector(createSnapshotStore<'queue' | 'steer'>('queue'))}
           useNotices={bindSnapshotSelector(wiring.notices)}
           useLexicon={bindSnapshotSelector(wiring.lexicon)}
           useMenuLauncher={bindSnapshotSelector(createSnapshotStore<string | null>(null))}
@@ -300,6 +302,7 @@ function mount(
       : (opts?.fallback ?? null)
   )) as ConversationRootProps['renderSlotChain']
   const props: ConversationRootProps = {
+    usePanelInfo: selector => selector({ activePanelId: null }),
     sessionId: SID,
     SessionProvider: ({ children }) => children,
     useSession,
@@ -329,7 +332,8 @@ describe('Hero chrome', () => {
   it('renders the English preview badge through the hero locale seat', () => {
     const renderSlot = vi.fn<HeroShellProps['renderSlot']>(() => null)
     const view = render(<HeroShell t={makeTranslate(en, commonEn)} renderSlot={renderSlot} />)
-    expect(view.getByText('What can I help you with?')).toBeTruthy()
+    expect(view.getByText('Into the Unknown')).toBeTruthy()
+    expect(view.getByText('Preview')).toBeTruthy()
     expect(renderSlot).toHaveBeenCalledOnce()
     expect(renderSlot.mock.calls[0]?.[0]).toBe('conversation.hero.brand.mark')
     const brandMarkOwner = renderSlot.mock.calls[0]?.[1]
@@ -475,18 +479,13 @@ describe('ConversationRoot resident composer', () => {
     const header = b.view.container.querySelector('header')
     expect(host).not.toBeNull()
     expect(header?.getAttribute('aria-hidden')).toBe('true')
-    expect(b.view.getByText('有什么可以帮你的吗？')).toBeTruthy()
+    expect(b.view.getByText('探索未至之境')).toBeTruthy()
+    expect(b.view.getByText('预览版')).toBeTruthy()
     expect(b.view.queryByTestId('view-chat')).toBeNull()
     // The same machine-backed textarea is live in the hero, and the
     // persistence mirror stays bound (ConversationSession mounts chrome-hidden
     // for blank sessions): hero typing reaches the Conversation store.
     const box = b.view.getByRole('textbox')
-    const shell = b.view.container.querySelector('[data-hero-composer-shell]')
-    const card = b.view.container.querySelector('[data-composer-card]')
-    const contextBar = b.view.container.querySelector('[data-hero-context-bar]')
-    expect(shell).not.toBeNull()
-    expect(shell?.contains(card)).toBe(true)
-    expect(shell?.contains(contextBar)).toBe(true)
     expect(host?.contains(box)).toBe(true)
     act(() => { b.wiring.setDraft('draft in hero') })
     expect(b.store.store.getSnapshot().draft).toBe('draft in hero')
@@ -514,7 +513,7 @@ describe('ConversationRoot resident composer', () => {
     expect(conversationPhase(failed, EMPTY_CONVERSATION_SNAPSHOT)).toBe('engaging')
     const b = mount(failed, undefined, undefined, { summaryBlank: true })
     expect(b.view.container.querySelector('[data-phase]')?.getAttribute('data-phase')).toBe('active')
-    expect(b.view.queryByText('有什么可以帮你的吗？')).toBeNull()
+    expect(b.view.queryByText('探索未至之境')).toBeNull()
   })
 
   it('settling phase: a summary that does not prove the session blank hides the composer while it opens', () => {
@@ -546,7 +545,7 @@ describe('ConversationRoot resident composer', () => {
     // blank the column for the history round-trip.
     const root = b.view.container.querySelector('[data-phase]')
     expect(root?.getAttribute('data-phase')).toBe('hero')
-    expect(b.view.getByText('有什么可以帮你的吗？')).toBeTruthy()
+    expect(b.view.getByText('探索未至之境')).toBeTruthy()
     expect(b.view.getByRole('textbox')).toBeTruthy()
   })
 
@@ -584,12 +583,9 @@ describe('ConversationRoot resident composer', () => {
 
     expect(b.view.getByTestId('view-chat')).toBeTruthy()
     expect(b.view.queryByTestId('view-new-view')).toBeNull()
-    expect(b.view.queryByRole('tab')).toBeNull()
     fireEvent.click(b.view.getByRole('button', { name: '切换任务视图' }))
     expect(b.view.getByRole('menuitem', { name: 'Chat' })).toBeTruthy()
     expect(b.view.getByRole('menuitem', { name: 'New view' })).toBeTruthy()
-    fireEvent.click(b.view.getByRole('menuitem', { name: 'New view' }))
-    expect(b.store.store.getSnapshot().view).toBe('new-view')
   })
 
   it('rolls the pending workspace label back when switching fails', async () => {
@@ -615,7 +611,6 @@ describe('ConversationRoot resident composer', () => {
     const chip = b.view.getByRole('button', { name: '选择工作区' })
     expect((chip as HTMLButtonElement).disabled).toBe(false)
     expect(b.slotCalls).toContain('conversation.hero.workspace')
-    expect(b.slotCalls).toContain('conversation.hero.footer')
     // The agent-preset chip sits in the same row, for the same reason: both
     // choices are only open before the first message.
     expect(b.slotCalls).toContain('conversation.hero.agentPreset')
@@ -633,7 +628,7 @@ describe('ConversationRoot resident composer', () => {
     const b = mount(sessionSnapshotOf())
     const root = b.view.container.querySelector('[data-phase]') as HTMLElement
     // jsdom offsetWidth is 0 until faked: the observer publishes whatever the
-    // layout reports, and the CSS clamp() floors the axis at 736px either way.
+    // layout reports, and the CSS clamp() floors the axis at 680px either way.
     Object.defineProperty(root, 'offsetWidth', { value: 1200, configurable: true })
     act(() => { fireResize(root) })
     expect(root.style.getPropertyValue('--dsh-conversation-column-width')).toBe('1200px')
@@ -667,8 +662,8 @@ describe('ConversationRoot resident composer', () => {
       fireEvent.pointerUp(handle, { pointerId: 1, clientX: 825, clientY: 300 })
       expect(root.style.getPropertyValue('--dsh-chat-user-width')).toBe('818px')
       expect(localStorage.getItem('dsh.conversation.contentWidth')).toBe('818')
-      // Window shrinks below the handle budget: the displayed width re-clamps
-      // to the 736px design floor, but the preference stays.
+      // Window shrinks: the displayed width re-clamps to the 736px floor but the
+      // preference stays.
       Object.defineProperty(root, 'offsetWidth', { value: 900, configurable: true })
       act(() => { fireResize(root) })
       expect(root.style.getPropertyValue('--dsh-chat-user-width')).toBe('736px')

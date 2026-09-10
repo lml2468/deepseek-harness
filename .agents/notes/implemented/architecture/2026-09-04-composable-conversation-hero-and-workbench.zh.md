@@ -12,7 +12,7 @@ Status: implemented
 
 `ui-conversation` 保持唯一常驻 composer，并暴露仅用于呈现的 Hero slot。`conversation.hero.header` 替换默认标题，`conversation.hero.content` 将产品发现内容排列在 composer 之前，`conversation.hero.footer` 将辅助内容排列在 DSH 上下文控件之后，`conversation.hero.layout` 可以排列已经构造好的标题、控件、内容、composer 和 footer 节点。默认布局将 composer 与其上下文控件组成一组，并把这一组放在发现内容之后。布局持有者只接收当前 Session 和输入快照，没有修改权限。无 Session、空白 Session、加载中和创建失败状态保持同一个 composer 组件身份。
 
-`ComposerMenuActionRegistry` 是对常驻 `+` 菜单入口排序的 root 服务。条目提供标签、图标、可用性和调用回调；registry 不持有能力状态。图片附件、引用和命令插件通过该服务注册既有动作。权限、模型和产品连接等持续选择仍是独立的 composer 控件。
+Root 级 `CommandUiRuntime` 是常驻 `+` 菜单与手动输入 `/` 命令的唯一公开组合 API。业务包可注册客户端自有的 `popupSelect` 或 `action` 贡献项，也可装饰既有 Host 命令，同时保留其目录行和生命周期。Runtime 持有命令的呈现与派发，不持有能力状态。权限和模型等持续选择仍是其权威 Session 服务的投影。
 
 `ui-chat` 声明 Session 级 `conversation.details.view` 列表并提供 `ctx.conversationDetails`。controller 定位当前已挂载 Session、校验已注册的 view id、打开由 layout 持有的详情栏，并在 Session 级 Chat store 中携带可选的一次性 focus 字符串。官方 Tool 检查器是内置 `tool` view。活动 view 被移除时选择剩余的第一个 view；没有 view 时关闭详情栏；切换 Session 仍由 `ui-layout` 关闭详情栏。
 
@@ -37,6 +37,6 @@ Session 级 `conversation.chat.turnHeader` 单一 slot 从 Turn 过程锚点渲�
 ## Consequences
 
 - 产品插件可以组合新会话层级、Turn 身份头部和右侧检查视图，而无需重建或镜像 DSH 状态。
-- Slot 注册和菜单条目由 effect 持有，并随插件卸载消失；重复动作 id 和未知 Workbench view id 会明确失败。
+- Slot 注册和命令贡献项由 effect 持有，并随插件卸载消失；重复命令名与未知 Workbench view id 会明确失败。
 - Workbench controller 只持有呈现状态。持久 Tool 数据、Session 历史、面板几何和执行行为仍由既有 DSH 所有者持有。
-- 包级测试覆盖注册顺序、菜单禁用与失败、焦点恢复、Session 局部 view 状态、view 移除、Modal 焦点和默认 fallback 渲染。组装后的浏览器测试继续负责几何与截图证据。
+- 包级测试覆盖命令注册与派发、弹窗失败处理、焦点恢复、Session 局部 view 状态、view 移除、Modal 焦点和默认 fallback 渲染。组装后的浏览器测试继续负责几何与截图证据。

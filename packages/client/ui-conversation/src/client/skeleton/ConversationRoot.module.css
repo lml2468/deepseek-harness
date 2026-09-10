@@ -7,34 +7,43 @@
   background: var(--dsw-alias-bg-base);
 
   /* Shared width axis for the whole column: one content width W
-     (--dsh-chat-content-width) for the transcript, input card, and
-     business-owned takeover cards. Composer dock cards retain their inset
-     treatment within that axis. Declared on the root because the transcript
-     and the composer seat are sibling subtrees.
+     (--dsh-chat-content-width) for the transcript, the dock cards
+     (todo/goal/queue: card minus four insets, 4 x 8 = 32), and business-owned
+     takeover cards; the input card alone is W + 32px.
+     The relation also holds when a narrow viewport shrinks everything: the
+     chat scroller and the takeover frames pad clearance + 16px per side while
+     the input card clears the bare clearance, so the input card stays exactly
+     content + 32px at every width. Declared on the root because the
+     transcript and the composer seat are sibling subtrees.
 
      W adapts to the column, not the viewport (a collapsed sidebar widens the
      column without resizing the window): the component publishes the column's
      live width as --dsh-conversation-column-width (px, via ResizeObserver —
      container-type would re-anchor the subtree's portal-free position:fixed
-     descendants) and the clamp keeps the task-first 736px design floor,
-     takes 62% of wider columns, and caps at 768px for line-length
+     descendants) and the clamp keeps a 680px floor (a step under the figma
+     748px — the full-width reading felt wide on every screen), takes 64% of
+     wider columns, and caps at 920px for line-length
      readability. A dragged user preference (--dsh-chat-user-width, published
      by the width handles) replaces the adaptive term wholesale. */
   --dsh-chat-content-width: var(
     --dsh-chat-user-width,
-    clamp(736px, calc(var(--dsh-conversation-column-width, 0px) * 0.62), 768px)
+    clamp(680px, calc(var(--dsh-conversation-column-width, 0px) * 0.64), 920px)
   );
-  --dsh-composer-card-max-width: var(--dsh-chat-content-width);
+  --dsh-composer-card-max-width: calc(var(--dsh-chat-content-width) + 32px);
   --dsh-composer-side-clearance: 16px;
   --dsh-composer-dock-inset: 8px;
 }
 
+/* 76px with its rule: the height of the Sidebar's tab strip and header row
+   (ui-dockkit `.tabStrip` 38px + the pane header's 38px), so the two rules
+   meet at the column edge. The rows add up to it — 10px top inset, the 30px
+   title row, the tab strip's 10px margin, a 16px tab line, and its 9px bottom
+   inset — so no row below may grow past its figure. */
 .header {
-  position: relative;
-  box-sizing: border-box;
   flex: none;
-  height: 56px;
-  padding: 10px 24px 10px 28px;
+  box-sizing: border-box;
+  min-height: 76px;
+  padding: 10px 28px 0 20px;
   border-bottom: 0.5px solid var(--dsw-alias-border-l3);
 }
 
@@ -48,7 +57,7 @@
   display: flex;
   align-items: center;
   gap: 0;
-  min-height: 36px;
+  min-height: 30px;
 }
 
 .titleCluster {
@@ -112,6 +121,13 @@
   cursor: default;
 }
 
+.headerActions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
 .headerUtilities {
   display: flex;
   flex: none;
@@ -120,29 +136,72 @@
   margin-left: 20px;
 }
 
-.headerIconButton {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
+.headerUtilities:empty {
+  display: none;
+}
+
+/* The far-right corner seat reaches 16px into the header's 28px right padding,
+   so its control sits past the utilities' edge; it is laid out only while its
+   occupant renders something. Its left margin equals the utilities' 8px gap so
+   the header's trailing controls space evenly. */
+.headerCorner {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin-left: 8px;
+  margin-right: -16px;
+}
+
+.headerCorner:empty {
+  display: none;
+}
+
+/* figma Tab_Group 34:11441: 35px strip, gap 36, pad-left 8, tabs bottom-aligned.
+   Positioned above the header's own paint, so the active bar covers the rule. */
+.tabs {
   position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 36px;
+  margin-top: 10px;
+  padding-left: 8px;
+}
+
+/* figma .Tab 34:11442: 13/16 text (figma wt510, rendered 500). The 2px bar
+   reaches 1px past the tab's box to end flush with the header's bottom edge,
+   sitting over the rule. */
+.tab {
+  position: relative;
+  padding: 0 0 9px;
   border: none;
-  border-radius: 8px;
   background: transparent;
-  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-tertiary);
   cursor: pointer;
 }
 
-.headerIconButton:hover,
-.headerIconButton[aria-expanded='true'] {
-  background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
+.tab::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: transparent;
 }
 
-.headerIconButton:focus-visible {
-  outline: 2px solid var(--dsw-alias-state-business-primary);
-  outline-offset: 1px;
+/* Selected tab is blue, not ink: brand-primary resolves to neutral black in
+   this token sheet, so the selected state rides the business blue — the
+   nearest semantic token that stays blue in both themes. */
+.tabActive {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.tabActive::after {
+  background: var(--dsw-alias-state-business-primary);
 }
 
 .viewArea {
@@ -284,12 +343,22 @@
   flex: 1;
   flex-direction: column;
   min-height: 0;
+  /* The product-wide 2px scrollbar offset (ui-workspace WorkspaceBrowser
+     `.list`, ui-sidebar-files FilesBody `.body`): the bar sits 2px clear of
+     the column's edge instead of flush against it. */
+  margin-right: 2px;
   overflow-y: auto;
   /* Reserved unconditionally: the composer seat rides this box's content box in
      Chat and its padding box under a view's composer overlay, so an `auto`
      gutter moves the input card sideways by the bar's width whenever the two
      differ ([decision](../../../../../../.agents/notes/archived/bug-fix/2026-08-04-composer-tab-gutter-reservation.md)). */
   scrollbar-gutter: stable;
+}
+
+/* The bar also stops 2px short of the scroller's ends, matching its 2px edge
+   offset. WebKit-only: the Firefox path has no track to inset. */
+.scrollBody::-webkit-scrollbar-track {
+  margin: 2px;
 }
 
 .root[data-phase='active'] .viewArea {
@@ -364,14 +433,17 @@
   left: 0;
 }
 
-/* Hero phase: the composer stack starts near the top of the column; composer
-   phase docks it at the bottom. Flex,
+/* Hero phase: the composer stack (hero chrome + workspace row + card) is
+   flex-centered in the column; composer phase docks it at the bottom. Flex,
    NOT absolute+transform: a transform would make this box the containing
    block for position:fixed descendants (pickers/modals), shrinking them. */
 .composerHero {
   align-self: center;
-  gap: 18px;
-  padding: clamp(132px, 21.2vh, 198px) 0 48px;
+  /* figma 75:8208 drew 12 between all three rows; the workspace row now sits
+     8 above the card (its margin-top restores 12 under the hero chrome). */
+  gap: 8px;
+  /* Foot inside the centered box floats the stack a bit above true center. */
+  padding-bottom: 32px;
   /* Card cap + both clearances: the hero input card lands at exactly the same
      width as the docked composer at every viewport. */
   width: min(calc(var(--dsh-composer-card-max-width) + 2 * var(--dsh-composer-side-clearance)), 100%);
@@ -379,20 +451,21 @@
 }
 
 .heroWorkspaceRow {
-  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 2px;
   min-width: 0;
-  min-height: 34px;
-  padding: 0 12px;
-  background: transparent;
+  margin-top: 4px;
+  /* figma drew px 8; left nudged +12 so the chip's folder glyph lines up
+     closer to the card's inner controls below; right keeps the trailing
+     preset seat off the card edge. */
+  padding: 0 16px 0 20px;
 }
 
-/* Hero: the composer stays in the session scroll body and begins at the top;
-   the tree seat still matches active (sticky footer) without a Root remount. */
+/* Hero: the composer sits inside the session scroll body; center there so
+   the tree seat matches active (sticky footer) without a Root remount. */
 .root[data-phase='hero'] .scrollBody {
-  justify-content: flex-start;
+  justify-content: center;
   overflow-y: auto;
 }
 

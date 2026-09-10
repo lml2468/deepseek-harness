@@ -8,7 +8,7 @@
 - text: Minimal mode
 - button "Switch task view":
   - img
-- button "Session log":
+- button "More actions":
   - img
-- button "Open the sidebar":
+- button "Open right sidebar":
   - img

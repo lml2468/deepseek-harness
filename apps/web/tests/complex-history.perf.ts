@@ -13,6 +13,7 @@ import type { StreamChunk } from '@deepseek-ai/dsh-llm'
 import {
   ToolCallId,
   createAssistantMessage,
+  createSystemMessage,
   createToolResultMessage,
   createUserMessage,
   expandAssistantStream,
@@ -196,11 +197,21 @@ function appendTitle(session: Session, title: string, messageSeq: SessionSeq): v
   })
 }
 
+function appendSystemPrompt(session: Session, turn: number, step: number): void {
+  session.append('system/message', {
+    turn,
+    step,
+    message: createSystemMessage(
+      'Synthetic performance system prompt.',
+      '@deepseek-ai/dsh-system-prompt',
+    ),
+  }, { surfaceOp: 'append' })
+}
+
 function appendRequestHeader(session: Session, turn: number, step: number): void {
   session.append('request/header', {
     header: {
       config: { provider: 'deepseek-official', model: 'deepseek-v4-flash' },
-      system: `Synthetic performance system prompt for turn ${String(turn)}, step ${String(step)}.`,
     },
     reason: turn === 1 && step === 1 ? 'initial' : 'change',
   })
@@ -334,6 +345,7 @@ function smallSidebarFixture(): string {
   }), { surfaceOp: 'append' })
   appendTitle(session, 'Synthetic sidebar session', user.seq)
   session.append('step/start', { turn: 1, step: 1 })
+  appendSystemPrompt(session, 1, 1)
   appendRequestHeader(session, 1, 1)
   appendToolStep(session, 1, 1, 2)
   session.append('step/end', { turn: 1, step: 1 })
@@ -360,6 +372,7 @@ function longHistoryFixture(): string {
     if (turn === 1) appendTitle(session, LONG_SESSION_TITLE, user.seq)
 
     session.append('step/start', { turn, step: 1 })
+    if (turn === 1) appendSystemPrompt(session, turn, 1)
     appendRequestHeader(session, turn, 1)
     if (turn % TOOL_TURN_INTERVAL === 0) {
       appendToolStep(session, turn, 1, TOOLS_PER_TOOL_TURN)
@@ -926,8 +939,13 @@ async function openLongHistory(page: Page): Promise<number> {
   const results = page.getByRole('tree', { name: 'Search results' }).getByRole('treeitem')
   await expect.poll(() => results.count(), { timeout: 60_000 }).toBe(1)
   await results.first().click()
-  await page.getByRole('tab', { name: 'Chat', exact: true }).waitFor({ timeout: 30_000 })
+  await page.getByRole('button', { name: 'Switch task view', exact: true }).waitFor({ timeout: 30_000 })
   return conversationTurns(page)
+}
+
+async function selectTaskView(page: Page, name: 'Chat' | 'Trajectory'): Promise<void> {
+  await page.getByRole('button', { name: 'Switch task view', exact: true }).click()
+  await page.getByRole('menuitem', { name, exact: true }).click()
 }
 
 async function continueConversation(
@@ -1234,14 +1252,14 @@ describe('manual web performance: complex workspace and history', () => {
       })
       const opened = await measure(cdp, async () => {
         await contentSearch.value.click()
-        await page.getByRole('tab', { name: 'Trajectory', exact: true }).waitFor({ timeout: 30_000 })
+        await page.getByRole('button', { name: 'Switch task view', exact: true }).waitFor({ timeout: 30_000 })
         return conversationTurns(page)
       })
       expect(opened.value).toBe(DEFAULT_HISTORY_TURNS)
 
       const trajectoryRows = page.getByRole('row')
       const coldTrajectory = await measure(cdp, async () => {
-        await page.getByRole('tab', { name: 'Trajectory', exact: true }).click()
+        await selectTaskView(page, 'Trajectory')
         return stableCount(trajectoryRows, count => count === EXPECTED_TRAJECTORY_ROWS)
       })
       expect(coldTrajectory.value).toBe(EXPECTED_TRAJECTORY_ROWS)
@@ -1257,7 +1275,7 @@ describe('manual web performance: complex workspace and history', () => {
       })
       expect(trajectorySearch.value).toBeLessThan(20)
 
-      await page.getByRole('tab', { name: 'Chat', exact: true }).click()
+      await selectTaskView(page, 'Chat')
       const historyPages: { turns: number; measurement: Measurement }[] = []
       let turns = await conversationTurns(page)
       while (turns < LONG_HISTORY_TURNS) {
@@ -1273,12 +1291,12 @@ describe('manual web performance: complex workspace and history', () => {
       }
 
       const warmTrajectory = await measure(cdp, async () => {
-        await page.getByRole('tab', { name: 'Trajectory', exact: true }).click()
+        await selectTaskView(page, 'Trajectory')
         return stableCount(trajectoryRows, count => count === EXPECTED_TRAJECTORY_ROWS)
       })
       expect(warmTrajectory.value).toBe(EXPECTED_TRAJECTORY_ROWS)
       const warmConversation = await measure(cdp, async () => {
-        await page.getByRole('tab', { name: 'Chat', exact: true }).click()
+        await selectTaskView(page, 'Chat')
         return conversationTurns(page)
       })
       expect(warmConversation.value).toBe(LONG_HISTORY_TURNS)
