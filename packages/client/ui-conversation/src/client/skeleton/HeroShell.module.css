@@ -148,7 +148,7 @@
 .root[data-hero-active] .composerFrame {
   gap: 2px;
   padding: 4px;
-  border-radius: 20px;
+  border-radius: 26px;
   background: var(--dsw-specific-selector);
   box-shadow: var(--dsw-elevation-panel);
 }
